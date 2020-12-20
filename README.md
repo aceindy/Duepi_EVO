@@ -16,4 +16,4 @@ It only covers the following features:
 • Heating power control
 
 Huge thanks go to pascal_bornat@hotmail.com
-who found the strings to control the EVO board
+who found the strings to control the EVO board and interfaced it to Jeedom
