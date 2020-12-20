@@ -3,10 +3,8 @@ Data to control Duepi_evo control board over serial line with ESP
 
 Introduction
 
-
 The commands described in this document were taken from the communications between the module
-wifi and the EVO LCD 7 controller board of the pellet stove. The list of commands provided in this
-document is not exhaustive.
+wifi and the EVO LCD 7 controller board of the pellet stove. 
 
 It only covers the following features:
 • Ignition
