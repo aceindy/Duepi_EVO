@@ -10,11 +10,11 @@ if const.str_cool1 in dataFromServer:
   print("Cooling down")
 elif const.str_cool2 in dataFromServer:
   print("Cooling down ")
-elif const.str_eteint in dataFromServer:
+elif const.str_off in dataFromServer:
   print("Off")
-elif const.str_allumage in dataFromServer:
+elif const.str_igniting in dataFromServer:
   print("Igniting starting")
-elif const.str_allume in dataFromServer:
+elif const.str_ignited in dataFromServer:
   print("Flame On")
 else:
   print(dataFromServer)

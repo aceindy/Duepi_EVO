@@ -10,7 +10,7 @@ sock.send(const.get_status.encode())
 dataFromServer = sock.recv(10).decode();
 
 #turn off if igniting or ignited
-if const.str_ignition in dataFromServer:
+if const.str_igniting in dataFromServer:
   sock.send(const.set_powerOff.encode())
   dataFromServer = sock.recv(10).decode();
 elif const.str_ignited in dataFromServer:

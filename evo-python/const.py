@@ -4,7 +4,7 @@
 str_cool1="0802002A"
 str_cool2="08010029"
 str_off="00000020"
-str_ignition="01020023"
+str_igniting="01010022"
 str_ignited="02010023"
 str_ack="00000020"
 
