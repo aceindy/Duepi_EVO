@@ -1,5 +1,5 @@
 # Duepi_EVO
-Data to control Duepi_evo control board over serial line with ESP 
+Info to control Duepi_evo control board over serial line with ESP 
 
 Introduction
 
