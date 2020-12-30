@@ -1,5 +1,6 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
-#Duepi-EVO
+
+##Duepi-EVO
 The `Duepi EVO` climate platform is a reverse engineered implementation of the app which is controlling Pellet stove heaters using a Duepi Evo Wifi module.
 This is in no way associated with the company Duepi and comes with no guarantees or warranty. Use at your own risk.
 
