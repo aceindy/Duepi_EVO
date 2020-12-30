@@ -7,7 +7,7 @@ This is in no way associated with the company Duepi and comes with no guarantees
 ### Hardware
 You must have the ESP Module installed and and flashed it with https://github.com/jeelabs/esp-link.
 
-## Functionality as of v0.3
+## Functionality
 - Control target temperature.
 - Control system on/off.
 
