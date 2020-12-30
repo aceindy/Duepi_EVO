@@ -56,7 +56,7 @@ DEFAULT_NAME = "Duepi EVO"
 DEFAULT_HOST = "192.168.103.137"
 DEFAULT_PORT = 23
 DEFAULT_MAX_TEMP = 30.0
-DEFAULT_MIN_TEMP = 6.0
+DEFAULT_MIN_TEMP = 15.0
 CONF_MAX_TEMP = "max_temp"
 CONF_MIN_TEMP = "min_temp"
 
@@ -136,7 +136,12 @@ class DuepiEvoDevice(ClimateEntity):
             return None
 
         result = [status, current_temperature]
-        _LOGGER.debug("Received %s, %s from Duepi-evo", status, current_temperature)
+        _LOGGER.debug(
+            "%s: Received %s, %s from %s",
+            self._name,
+            status,
+            str(current_temperature),
+        )
         return result
 
     @property
@@ -202,8 +207,9 @@ class DuepiEvoDevice(ClimateEntity):
         if self._target_temperature is None:
             self._target_temperature = self._current_temperature
             _LOGGER.debug(
-                "_target_temperature not set, using _current_temperature %s",
-                self._current_temperature,
+                "%s _target_temperature not set, using _current_temperature %s",
+                self._name,
+                str(self._current_temperature),
             )
         return self._target_temperature
 
@@ -222,7 +228,9 @@ class DuepiEvoDevice(ClimateEntity):
         target_temperature = kwargs.get(ATTR_TEMPERATURE)
         if target_temperature is None:
             return
-        _LOGGER.debug("Set %s target temp to %s°C", self._name, str(target_temperature))
+        _LOGGER.debug(
+            "%s: Set target temp to %s°C", self._name, str(target_temperature)
+        )
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((self._host, self._port))
@@ -237,7 +245,7 @@ class DuepiEvoDevice(ClimateEntity):
         dataFromServer = sock.recv(10).decode()
         if const.str_ack not in dataFromServer:
             _LOGGER.error(
-                "Unable to set %s target temp to %s°C",
+                "%s: Unable to set target temp to %s°C",
                 self._name,
                 str(target_temperature),
             )
@@ -266,7 +274,7 @@ class DuepiEvoDevice(ClimateEntity):
 
     async def async_set_hvac_mode(self, hvac_mode: str) -> None:
         """Set new target hvac mode."""
-        _LOGGER.debug("Set %s hvac mode to %s", self.name, str(hvac_mode))
+        _LOGGER.debug("%s: Set hvac mode to %s", self.name, str(hvac_mode))
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((self._host, self._port))
@@ -274,12 +282,20 @@ class DuepiEvoDevice(ClimateEntity):
             sock.send(const.set_powerOff.encode())
             dataFromServer = sock.recv(10).decode()
             if const.str_ack not in dataFromServer:
-                _LOGGER.error("Duepi unknown return value %s", dataFromServer)
+                _LOGGER.error(
+                    "%s: unknown return value %s",
+                    self.name,
+                    dataFromServer,
+                )
             self._hvac_mode = HVAC_MODE_OFF
         elif hvac_mode == "heat":
             sock.send(const.set_powerOn.encode())
             dataFromServer = sock.recv(10).decode()
             if const.str_ack not in dataFromServer:
-                _LOGGER.error("Duepi unknown return value %s", dataFromServer)
+                _LOGGER.error(
+                    "%s: unknown return value %s",
+                    self.name,
+                    dataFromServer,
+                )
             self._hvac_mode = HVAC_MODE_HEAT
         sock.close()
