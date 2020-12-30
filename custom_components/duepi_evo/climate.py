@@ -53,20 +53,20 @@ SUPPORT_MODES = [HVAC_MODE_HEAT, HVAC_MODE_OFF]
 
 
 DEFAULT_NAME = "Duepi EVO"
-DEFAULT_HOST = "192.168.103.137"
+DEFAULT_HOST = ""
 DEFAULT_PORT = 23
-DEFAULT_MAX_TEMP = 30.0
 DEFAULT_MIN_TEMP = 15.0
-CONF_MAX_TEMP = "max_temp"
+DEFAULT_MAX_TEMP = 30.0
 CONF_MIN_TEMP = "min_temp"
+CONF_MAX_TEMP = "max_temp"
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
-        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
         vol.Required(CONF_HOST, default=DEFAULT_HOST): cv.string,
         vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.positive_int,
-        vol.Optional(CONF_MIN_TEMP, default=6.0): vol.Coerce(float),
-        vol.Optional(CONF_MAX_TEMP, default=25.0): vol.Coerce(float),
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_MIN_TEMP, default=DEFAULT_MIN_TEMP): vol.Coerce(float),
+        vol.Optional(CONF_MAX_TEMP, default=DEFAULT_MAX_TEMP): vol.Coerce(float),
     }
 )
 
