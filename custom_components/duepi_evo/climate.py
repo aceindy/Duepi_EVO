@@ -136,7 +136,7 @@ class DuepiEvoDevice(ClimateEntity):
             return None
 
         result = [status, current_temperature]
-
+        _LOGGER.debug("Received %s, %s from Duepi-evo", status, current_temperature)
         return result
 
     @property
@@ -153,28 +153,22 @@ class DuepiEvoDevice(ClimateEntity):
         if self._status:
             if const.str_cool1 in self._status:
                 self._burner_info = "Cooling down1"
-                self._heating = False
             elif const.str_cool2 in self._status:
                 self._burner_info = "Cooling down2"
-                self._heating = False
             elif const.str_cool3 in self._status:
                 self._burner_info = "Eco Cooling Down"
-                self._heating = False
             elif const.str_off in self._status:
                 self._burner_info = "Off"
-                self._heating = False
             elif const.str_eco_off in self._status:
                 self._burner_info = "Eco Standby"
-                self._heating = False
             elif const.str_igniting in self._status:
                 self._burner_info = "Igniting starting"
-                self._heating = True
             elif const.str_ignited in self._status:
                 self._burner_info = "Flame On"
-                self._heating = True
             else:
                 self._burner_info = "Unknown"
-                self._heating = False
+
+            self._heating = self._burner_info in ["Flame On", "Igniting starting"]
 
     @property
     def supported_features(self) -> int:
@@ -189,9 +183,7 @@ class DuepiEvoDevice(ClimateEntity):
     @property
     def device_state_attributes(self) -> Dict[str, Any]:
         """Return the current state of the burner."""
-        return {
-            "burner_info": self._burner_info,
-        }
+        return {"burner_info": self._burner_info}
 
     @property
     def temperature_unit(self) -> str:
@@ -206,8 +198,13 @@ class DuepiEvoDevice(ClimateEntity):
     @property
     def target_temperature(self) -> Optional[float]:
         """Return the temperature we try to reach."""
+        # Use environment temperature is set to None (bug)
         if self._target_temperature is None:
             self._target_temperature = self._current_temperature
+            _LOGGER.debug(
+                "_target_temperature not set, using _current_temperature %s",
+                self._current_temperature,
+            )
         return self._target_temperature
 
     @property
@@ -225,33 +222,26 @@ class DuepiEvoDevice(ClimateEntity):
         target_temperature = kwargs.get(ATTR_TEMPERATURE)
         if target_temperature is None:
             return
+        _LOGGER.debug("Set %s target temp to %s°C", self._name, str(target_temperature))
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((self._host, self._port))
-        setPoint = target_temperature
-        setPointInt = int(setPoint)
-        constInt = 75
-        codeInt = setPointInt + constInt
-        codeHexStr = hex(codeInt)
+        setPointInt = int(target_temperature)
+        codeHexStr = hex(setPointInt + 75)
         setPointHexStr = hex(setPointInt)
-        data2 = const.set_temperature.replace("yy", codeHexStr[2:4])
-        data3 = data2.replace("xx", setPointHexStr[2:4])
-        sock.send(data3.encode())
+        # send RF2xx0yy
+        data = const.set_temperature
+        datayy = data.replace("yy", codeHexStr[2:4])
+        dataxy = datayy.replace("xx", setPointHexStr[2:4])
+        sock.send(dataxy.encode())
         dataFromServer = sock.recv(10).decode()
-        if const.str_ack in dataFromServer:
-            _LOGGER.debug(
-                "Set %s target temp to %s°C",
-                self._name,
-                str(target_temperature),
-            )
-        else:
-            _LOGGER.debug(
+        if const.str_ack not in dataFromServer:
+            _LOGGER.error(
                 "Unable to set %s target temp to %s°C",
                 self._name,
                 str(target_temperature),
             )
         sock.close()
-
         self._target_temperature = target_temperature
 
     @property
@@ -281,42 +271,15 @@ class DuepiEvoDevice(ClimateEntity):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((self._host, self._port))
         if hvac_mode == "off":
-            # check if igniting or ignited
-            sock.send(const.get_status.encode())
+            sock.send(const.set_powerOff.encode())
             dataFromServer = sock.recv(10).decode()
-
-            # turn off if igniting or ignited
-            if const.str_igniting in dataFromServer:
-                sock.send(const.set_powerOff.encode())
-                dataFromServer = sock.recv(10).decode()
-            elif const.str_ignited in dataFromServer:
-                sock.send(const.set_powerOff.encode())
-                dataFromServer = sock.recv(10).decode()
-            elif const.str_eco_off in dataFromServer:
-                sock.send(const.set_powerOff.encode())
-                dataFromServer = sock.recv(10).decode()
-            else:
-                _LOGGER.debug("Duepi allready off")
-            if const.str_ack in dataFromServer:
-                _LOGGER.debug("Duepi turning off")
-            else:
-                _LOGGER.debug("Duepi unknown return value %s", dataFromServer)
+            if const.str_ack not in dataFromServer:
+                _LOGGER.error("Duepi unknown return value %s", dataFromServer)
             self._hvac_mode = HVAC_MODE_OFF
         elif hvac_mode == "heat":
-            # check if off
-            sock.send(const.get_status.encode())
+            sock.send(const.set_powerOn.encode())
             dataFromServer = sock.recv(10).decode()
-
-            # turn on if off
-            if const.str_off in dataFromServer:
-                sock.send(const.set_powerOn.encode())
-                dataFromServer = sock.recv(10).decode()
-                if const.str_ack in dataFromServer:
-                    _LOGGER.debug("Duepi turning on")
-                else:
-                    _LOGGER.debug("Duepi unknown return value %s", dataFromServer)
-            else:
-                _LOGGER.debug("Duepi allready off")
+            if const.str_ack not in dataFromServer:
+                _LOGGER.error("Duepi unknown return value %s", dataFromServer)
             self._hvac_mode = HVAC_MODE_HEAT
-
         sock.close()
