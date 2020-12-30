@@ -7,6 +7,7 @@ This is in no way associated with the company Duepi and comes with no guarantees
 ## Prerequisites
 ### Hardware
 You must have the ESP Module installed and and flashed it with https://github.com/jeelabs/esp-link.
+Baudrate 115200, 8N1
 
 ## Functionality
 - Control target temperature.
