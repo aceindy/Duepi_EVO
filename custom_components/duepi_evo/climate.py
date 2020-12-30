@@ -137,7 +137,7 @@ class DuepiEvoDevice(ClimateEntity):
 
         result = [status, current_temperature]
         _LOGGER.debug(
-            "%s: Received %s, %s from %s",
+            "%s: Received %s from %s",
             self._name,
             status,
             str(current_temperature),
