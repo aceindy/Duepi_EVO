@@ -40,6 +40,8 @@ logger:
   logs:
     custom_components.duepi_evo: debug
 ```
+Confirmed working on:
+- Qlima Viola 85 S-Line 
 
 Huge thanks go to pascal_bornat@hotmail.com
 who found the strings to control the EVO board and interfaced it to Jeedom
