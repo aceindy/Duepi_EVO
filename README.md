@@ -34,7 +34,7 @@ climate:
 Configuration variables:
 
 - **name** (*optional*): The name of your climate entity. Default is `Duepi Evo`
-- **min/max_temperature (*optional*): The available setpoint range within HA. Default is 15-30 degs celsius.
+- **min/max_temperature** (*optional*): The available setpoint range within HA. Default is 15-30 degs celsius.
 ## Troubleshooting
 Please set your logging for the custom_component to debug:
 ```yaml
