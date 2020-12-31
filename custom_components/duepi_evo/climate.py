@@ -50,7 +50,6 @@ _LOGGER = logging.getLogger(__name__)
 SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE
 SUPPORT_MODES = [HVAC_MODE_HEAT, HVAC_MODE_OFF]
 
-
 DEFAULT_NAME = "Duepi EVO"
 DEFAULT_HOST = ""
 DEFAULT_PORT = 23
@@ -68,23 +67,16 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_MAX_TEMP, default=DEFAULT_MAX_TEMP): vol.Coerce(float),
     }
 )
+
 # constants
+state_off = 0x00000020
+state_start = 0x01000000
+state_on = 0x02000000
+state_cool = 0x08000000
+state_eco = 0x10000000
 
-# Status results
-str_off = "00000020"  # Off
-str_igniting = "01010022"  # Ignition starting
-str_ignited = "02010023"  # Flame on
-str_cool1 = "0802002A"  # Cooling down
-str_cool2 = "08010029"  # Cooling down
-str_cool3 = "10010022"  # Cooling down (eco)
-str_eco_off = "10030024"  # Eco standby
-str_ack = "00000020"  # both acknoledge and off
-
-# Get data
 get_status = "\x1bRD90005f&"
 get_temperature = "\x1bRD100057&"
-
-# Set data
 set_temperature = "\x1bRF2xx0yy&"
 set_powerLevel = "\x1bRF00x0yy&"
 set_powerOff = "\x1bRF000058&"
@@ -110,19 +102,11 @@ class DuepiEvoDevice(ClimateEntity):
         self._port = config.get(CONF_PORT)
         self._min_temp = config.get(CONF_MIN_TEMP)
         self._max_temp = config.get(CONF_MAX_TEMP)
-
-        self._data = None
         self._current_temperature = None
         self._target_temperature = None
         self._heating = False
         self._burner_info = None
-
-        self._modulation_level = None
-        self._program_state = None
         self._hvac_mode = CURRENT_HVAC_OFF
-        self._state = None
-
-    #        self._preset = None
 
     @staticmethod
     async def get_data(self):
@@ -131,21 +115,32 @@ class DuepiEvoDevice(ClimateEntity):
             with async_timeout.timeout(5):
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.connect((self._host, self._port))
+                # Get Burner status
                 sock.send(get_status.encode())
-                status = sock.recv(10).decode()
-                status = status[1:15]
+                dataFromServer = sock.recv(10).decode()
+                dataFromServer = dataFromServer[1:9]
+                current_state = int(dataFromServer, 16)
 
+                if state_start & current_state:
+                    status = "Ignition starting"
+                elif state_on & current_state:
+                    status = "Flame On"
+                elif state_eco & current_state:
+                    status = "Eco Idle"
+                elif state_cool & current_state:
+                    status = "Cooling down"
+                elif state_off & current_state:
+                    status = "Off"
+                else:
+                    status = "Error"
+
+                # Get Ambient temperature
                 sock.send(get_temperature.encode())
                 dataFromServer = sock.recv(10).decode()
                 if len(dataFromServer) != 0:
-                    tempStrHex = dataFromServer[1:5]
-                    tempIntDec = int(tempStrHex, 16)
-                    current_temperature = tempIntDec / 10.0
+                    current_temperature = int(dataFromServer[1:5], 16) / 10.0
                 else:
                     current_temperature = 0.0
-
-                sock.send(get_temperature.encode())
-                dataFromServer = sock.recv(10).decode()
 
                 sock.close()
 
@@ -157,7 +152,7 @@ class DuepiEvoDevice(ClimateEntity):
 
         result = [status, current_temperature]
         _LOGGER.debug(
-            "%s: Received %s from %s",
+            "%s: Received burner: %s, ambient temp: %s",
             self._name,
             status,
             str(current_temperature),
@@ -172,28 +167,9 @@ class DuepiEvoDevice(ClimateEntity):
     async def async_update(self) -> None:
         """Update local data with thermostat data."""
         data = await self.get_data(self)
-        self._status = data[0]
+        self._burner_info = data[0]
         self._current_temperature = data[1]
-
-        if self._status:
-            if str_cool1 in self._status:
-                self._burner_info = "Cooling down1"
-            elif str_cool2 in self._status:
-                self._burner_info = "Cooling down2"
-            elif str_cool3 in self._status:
-                self._burner_info = "Eco Cooling Down"
-            elif str_off in self._status:
-                self._burner_info = "Off"
-            elif str_eco_off in self._status:
-                self._burner_info = "Eco Standby"
-            elif str_igniting in self._status:
-                self._burner_info = "Igniting starting"
-            elif str_ignited in self._status:
-                self._burner_info = "Flame On"
-            else:
-                self._burner_info = "Unknown"
-
-            self._heating = self._burner_info in ["Flame On", "Igniting starting"]
+        self._heating = self._burner_info in ["Flame On", "Ignition starting"]
 
     @property
     def supported_features(self) -> int:
@@ -227,7 +203,7 @@ class DuepiEvoDevice(ClimateEntity):
         if self._target_temperature is None:
             self._target_temperature = self._current_temperature
             _LOGGER.debug(
-                "%s _target_temperature not set, using _current_temperature %s",
+                "%s Setpoint unknown, using _current_temperature %s",
                 self._name,
                 str(self._current_temperature),
             )
@@ -263,7 +239,7 @@ class DuepiEvoDevice(ClimateEntity):
         dataxy = datayy.replace("xx", setPointHexStr[2:4])
         sock.send(dataxy.encode())
         dataFromServer = sock.recv(10).decode()
-        if str_ack not in dataFromServer:
+        if state_off not in dataFromServer:
             _LOGGER.error(
                 "%s: Unable to set target temp to %s°C",
                 self._name,
@@ -301,7 +277,7 @@ class DuepiEvoDevice(ClimateEntity):
         if hvac_mode == "off":
             sock.send(set_powerOff.encode())
             dataFromServer = sock.recv(10).decode()
-            if str_ack not in dataFromServer:
+            if state_off not in dataFromServer:
                 _LOGGER.error(
                     "%s: unknown return value %s",
                     self.name,
@@ -311,7 +287,7 @@ class DuepiEvoDevice(ClimateEntity):
         elif hvac_mode == "heat":
             sock.send(set_powerOn.encode())
             dataFromServer = sock.recv(10).decode()
-            if str_ack not in dataFromServer:
+            if state_off not in dataFromServer:
                 _LOGGER.error(
                     "%s: unknown return value %s",
                     self.name,
