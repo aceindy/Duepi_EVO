@@ -6,7 +6,7 @@ This is in no way associated with the company Duepi and comes with no guarantees
 
 ## Prerequisites
 ### Hardware
-You must have the ESP Module installed and and flashed it with https://github.com/jeelabs/esp-link.
+You must have the ESP Module installed and flash it with https://github.com/jeelabs/esp-link.
 Baudrate 115200, 8N1
 
 ## Functionality
@@ -27,12 +27,14 @@ climate:
     host: 192.168.1.123
     port: 23
     scan_interval: 60
+    min_temperature: 20
+    max_temperature: 30
 ```
 
 Configuration variables:
 
-- **name** (*Optional*): The name of your climate entity. Default is `Duepi Evo`
-
+- **name** (*optional*): The name of your climate entity. Default is `Duepi Evo`
+- **min/max_temperature (*optional*): The available setpoint range within HA. Default is 15-30 degs celsius.
 ## Troubleshooting
 Please set your logging for the custom_component to debug:
 ```yaml
