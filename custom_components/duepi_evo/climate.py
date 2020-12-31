@@ -276,6 +276,5 @@ class DuepiEvoDevice(ClimateEntity):
         elif hvac_mode == "heat":
             sock.send(set_powerOn.encode())
             dataFromServer = sock.recv(10).decode()
-            current_state = int(dataFromServer, 16)
             self._hvac_mode = HVAC_MODE_HEAT
         sock.close()
