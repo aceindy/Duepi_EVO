@@ -240,13 +240,6 @@ class DuepiEvoDevice(ClimateEntity):
         dataxy = datayy.replace("xx", setPointHexStr[2:4])
         sock.send(dataxy.encode())
         dataFromServer = sock.recv(10).decode()
-        current_state = int(dataFromServer, 16)
-        if not (state_ack & current_state):
-            _LOGGER.error(
-                "%s: Unable to set target temp to %s°C",
-                self._name,
-                str(target_temperature),
-            )
         sock.close()
         self._target_temperature = target_temperature
 
@@ -279,23 +272,10 @@ class DuepiEvoDevice(ClimateEntity):
         if hvac_mode == "off":
             sock.send(set_powerOff.encode())
             dataFromServer = sock.recv(10).decode()
-            current_state = int(dataFromServer, 16)
-            if not (state_ack & current_state):
-                _LOGGER.error(
-                    "%s: unknown return value %s",
-                    self.name,
-                    dataFromServer,
-                )
             self._hvac_mode = HVAC_MODE_OFF
         elif hvac_mode == "heat":
             sock.send(set_powerOn.encode())
             dataFromServer = sock.recv(10).decode()
             current_state = int(dataFromServer, 16)
-            if not (state_ack & current_state):
-                _LOGGER.error(
-                    "%s: unknown return value %s",
-                    self.name,
-                    dataFromServer,
-                )
             self._hvac_mode = HVAC_MODE_HEAT
         sock.close()
