@@ -69,6 +69,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 )
 
 # constants
+state_ack = 0x00000020
 state_off = 0x00000020
 state_start = 0x01000000
 state_on = 0x02000000
@@ -239,7 +240,8 @@ class DuepiEvoDevice(ClimateEntity):
         dataxy = datayy.replace("xx", setPointHexStr[2:4])
         sock.send(dataxy.encode())
         dataFromServer = sock.recv(10).decode()
-        if state_off not in dataFromServer:
+        current_state = int(dataFromServer, 16)
+        if not (state_ack & current_state):
             _LOGGER.error(
                 "%s: Unable to set target temp to %s°C",
                 self._name,
@@ -277,7 +279,8 @@ class DuepiEvoDevice(ClimateEntity):
         if hvac_mode == "off":
             sock.send(set_powerOff.encode())
             dataFromServer = sock.recv(10).decode()
-            if state_off not in dataFromServer:
+            current_state = int(dataFromServer, 16)
+            if not (state_ack & current_state):
                 _LOGGER.error(
                     "%s: unknown return value %s",
                     self.name,
@@ -287,7 +290,8 @@ class DuepiEvoDevice(ClimateEntity):
         elif hvac_mode == "heat":
             sock.send(set_powerOn.encode())
             dataFromServer = sock.recv(10).decode()
-            if state_off not in dataFromServer:
+            current_state = int(dataFromServer, 16)
+            if not (state_ack & current_state):
                 _LOGGER.error(
                     "%s: unknown return value %s",
                     self.name,
