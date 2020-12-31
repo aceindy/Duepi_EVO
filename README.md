@@ -1,13 +1,15 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
-#Duepi-EVO
+
+## Duepi-EVO
 The `Duepi EVO` climate platform is a reverse engineered implementation of the app which is controlling Pellet stove heaters using a Duepi Evo Wifi module.
 This is in no way associated with the company Duepi and comes with no guarantees or warranty. Use at your own risk.
 
 ## Prerequisites
 ### Hardware
-You must have the ESP Module installed and and flashed it with https://github.com/jeelabs/esp-link.
+You must have the ESP Module installed and flash it with https://github.com/jeelabs/esp-link.
+Baudrate 115200, 8N1
 
-## Functionality as of v0.3
+## Functionality
 - Control target temperature.
 - Control system on/off.
 
@@ -25,12 +27,14 @@ climate:
     host: 192.168.1.123
     port: 23
     scan_interval: 60
+    min_temperature: 20
+    max_temperature: 30
 ```
 
 Configuration variables:
 
-- **name** (*Optional*): The name of your climate entity. Default is `Duepi Evo`
-
+- **name** (*optional*): The name of your climate entity. Default is `Duepi Evo`
+- **min/max_temperature** (*optional*): The available setpoint range within HA. Default is 15-30 degs celsius.
 ## Troubleshooting
 Please set your logging for the custom_component to debug:
 ```yaml
@@ -39,6 +43,8 @@ logger:
   logs:
     custom_components.duepi_evo: debug
 ```
+Confirmed working on:
+- Qlima Viola 85 S-Line 
 
 Huge thanks go to pascal_bornat@hotmail.com
 who found the strings to control the EVO board and interfaced it to Jeedom
