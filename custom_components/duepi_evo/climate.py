@@ -25,6 +25,7 @@ from homeassistant.components.climate.const import (
     CURRENT_HVAC_OFF,
     HVAC_MODE_HEAT,
     HVAC_MODE_OFF,
+    SUPPORT_FAN_MODE,
     SUPPORT_TARGET_TEMPERATURE,
 )
 from homeassistant.const import (
@@ -47,7 +48,7 @@ except ImportError:
 
 _LOGGER = logging.getLogger(__name__)
 
-SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE
+SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE | SUPPORT_FAN_MODE
 SUPPORT_MODES = [HVAC_MODE_HEAT, HVAC_MODE_OFF]
 
 DEFAULT_NAME = "Duepi EVO"
@@ -107,7 +108,11 @@ class DuepiEvoDevice(ClimateEntity):
         self._target_temperature = None
         self._heating = False
         self._burner_info = None
+        self._burner_status = None
         self._hvac_mode = CURRENT_HVAC_OFF
+        self._fan_mode = None
+        self._fan_modes = ["P1", "P2", "P3", "P4", "P5"]
+        self._current_fan_mode = self._fan_mode
 
     @staticmethod
     async def get_data(self):
@@ -146,9 +151,7 @@ class DuepiEvoDevice(ClimateEntity):
                 sock.close()
 
         except asyncio.TimeoutError:
-            _LOGGER.error(
-                "Timeout error occurred while polling using host: %s", self._host
-            )
+            _LOGGER.error("Error occurred while polling using host: %s", self._host)
             return None
 
         result = [status, current_temperature]
@@ -168,9 +171,18 @@ class DuepiEvoDevice(ClimateEntity):
     async def async_update(self) -> None:
         """Update local data with thermostat data."""
         data = await self.get_data(self)
-        self._burner_info = data[0]
+        self._burner_status = data[0]
         self._current_temperature = data[1]
-        self._heating = self._burner_info in ["Flame On", "Ignition starting"]
+        self._burner_info = 0
+        if self._burner_status != "Off":
+            self._burner_info = 1
+            self._heating = True
+            self._hvac_mode = HVAC_MODE_HEAT
+        elif self._burner_status in ["Ignition starting", "Flame On"]:
+            self._heating = False
+            self._burner_info = 0
+        else:
+            self._hvac_mode = HVAC_MODE_OFF
 
     @property
     def supported_features(self) -> int:
@@ -240,6 +252,14 @@ class DuepiEvoDevice(ClimateEntity):
         dataxy = datayy.replace("xx", setPointHexStr[2:4])
         sock.send(dataxy.encode())
         dataFromServer = sock.recv(10).decode()
+        dataFromServer = dataFromServer[1:9]
+        current_state = int(dataFromServer, 16)
+        if not (state_ack & current_state):
+            _LOGGER.error(
+                "%s: Unable to set target temp to %s°C",
+                self._name,
+                str(target_temperature),
+            )
         sock.close()
         self._target_temperature = target_temperature
 
@@ -256,7 +276,8 @@ class DuepiEvoDevice(ClimateEntity):
     @property
     def hvac_action(self) -> Optional[str]:
         """Return the current running hvac operation."""
-        if "Eco" in self._burner_info:
+
+        if "Eco" in self._burner_status:
             return CURRENT_HVAC_IDLE
         elif self._heating:
             return CURRENT_HVAC_HEAT
@@ -272,9 +293,49 @@ class DuepiEvoDevice(ClimateEntity):
         if hvac_mode == "off":
             sock.send(set_powerOff.encode())
             dataFromServer = sock.recv(10).decode()
+            dataFromServer = dataFromServer[1:9]
+            current_state = int(dataFromServer, 16)
+            if not (state_ack & current_state):
+                _LOGGER.error(
+                    "%s: unknown return value %s",
+                    self.name,
+                    dataFromServer,
+                )
             self._hvac_mode = HVAC_MODE_OFF
         elif hvac_mode == "heat":
             sock.send(set_powerOn.encode())
             dataFromServer = sock.recv(10).decode()
-            self._hvac_mode = HVAC_MODE_HEAT
+            dataFromServer = dataFromServer[1:9]
+            current_state = int(dataFromServer, 16)
+            if not (state_ack & current_state):
+                _LOGGER.error(
+                    "%s: unknown return value %s",
+                    self.name,
+                    dataFromServer,
+                )
         sock.close()
+
+    @property
+    def fan_mode(self):
+        """Return the fan setting."""
+        return self._current_fan_mode
+
+    @property
+    def fan_modes(self):
+        """Return the list of available fan modes."""
+        return self._fan_modes
+
+    async def async_set_fan_mode(self, fan_mode: str) -> None:
+        self._current_fan_mode = fan_mode
+        _LOGGER.debug("%s setting fanSpeed to %s", self.name, str(fan_mode))
+
+        fan_speed = int(fan_mode[-1:])
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((self._host, self._port))
+
+        codeHexStr = hex(88 + fan_speed)
+
+        data_yy = set_powerLevel.replace("yy", codeHexStr[2:4])
+        powerlevelHexStr = hex(fan_speed)
+        data_xx = data_yy.replace("x", powerlevelHexStr[2:3])
+        sock.send(data_xx.encode())
