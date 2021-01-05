@@ -107,11 +107,10 @@ class DuepiEvoDevice(ClimateEntity):
         self._current_temperature = None
         self._target_temperature = None
         self._heating = False
-        self._burner_info = None
         self._burner_status = None
         self._hvac_mode = CURRENT_HVAC_OFF
         self._fan_mode = None
-        self._fan_modes = ["P1", "P2", "P3", "P4", "P5"]
+        self._fan_modes = ["1", "2", "3", "4", "5"]
         self._current_fan_mode = self._fan_mode
 
     @staticmethod
@@ -173,16 +172,13 @@ class DuepiEvoDevice(ClimateEntity):
         data = await self.get_data(self)
         self._burner_status = data[0]
         self._current_temperature = data[1]
-        self._burner_info = 0
-        if self._burner_status != "Off":
-            self._burner_info = 1
-            self._heating = True
-            self._hvac_mode = HVAC_MODE_HEAT
+
+        self._heating = True
+        self._hvac_mode = HVAC_MODE_HEAT
+        if self._burner_status == "Off":
+            self._hvac_mode = HVAC_MODE_OFF
         elif self._burner_status in ["Ignition starting", "Flame On"]:
             self._heating = False
-            self._burner_info = 0
-        else:
-            self._hvac_mode = HVAC_MODE_OFF
 
     @property
     def supported_features(self) -> int:
@@ -197,7 +193,7 @@ class DuepiEvoDevice(ClimateEntity):
     @property
     def device_state_attributes(self) -> Dict[str, Any]:
         """Return the current state of the burner."""
-        return {"burner_info": self._burner_info}
+        return {"burner_status": self._burner_status}
 
     @property
     def temperature_unit(self) -> str:
@@ -214,11 +210,11 @@ class DuepiEvoDevice(ClimateEntity):
         """Return the temperature we try to reach."""
         # Use environment temperature is set to None (bug)
         if self._target_temperature is None:
-            self._target_temperature = self._current_temperature
+            self._target_temperature = int(self._current_temperature)
             _LOGGER.debug(
                 "%s Setpoint unknown, using _current_temperature %s",
                 self._name,
-                str(self._current_temperature),
+                str(self._target_temperature),
             )
         return self._target_temperature
 
@@ -276,7 +272,6 @@ class DuepiEvoDevice(ClimateEntity):
     @property
     def hvac_action(self) -> Optional[str]:
         """Return the current running hvac operation."""
-
         if "Eco" in self._burner_status:
             return CURRENT_HVAC_IDLE
         elif self._heating:
@@ -329,7 +324,7 @@ class DuepiEvoDevice(ClimateEntity):
         self._current_fan_mode = fan_mode
         _LOGGER.debug("%s setting fanSpeed to %s", self.name, str(fan_mode))
 
-        fan_speed = int(fan_mode[-1:])
+        fan_speed = int(fan_mode)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((self._host, self._port))
 
