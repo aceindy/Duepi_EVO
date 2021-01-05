@@ -13,9 +13,6 @@ Baudrate 115200, 8N1
 - Control target temperature.
 - Control system on/off.
 
-## Coming soon...
-- Control power stages
-
 ## Configuration
 Add the following to your `configuration.yaml` file:
 
