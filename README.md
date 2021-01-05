@@ -41,7 +41,9 @@ logger:
     custom_components.duepi_evo: debug
 ```
 Confirmed working on:
-- Qlima Viola 85 S-Line 
+- Qlima Viola 85 S-Line
+- Kalor
+- Artel
 
 ## To do
 Get serial data for:
