@@ -54,7 +54,7 @@ SUPPORT_MODES = [HVAC_MODE_HEAT, HVAC_MODE_OFF]
 DEFAULT_NAME = "Duepi EVO"
 DEFAULT_HOST = ""
 DEFAULT_PORT = 23
-DEFAULT_MIN_TEMP = 6.0
+DEFAULT_MIN_TEMP = 15.0
 DEFAULT_MAX_TEMP = 30.0
 CONF_MIN_TEMP = "min_temp"
 CONF_MAX_TEMP = "max_temp"
@@ -176,8 +176,9 @@ class DuepiEvoDevice(ClimateEntity):
         self._heating = True
         self._hvac_mode = HVAC_MODE_HEAT
         if self._burner_status == "Off":
+            self._heating = False
             self._hvac_mode = HVAC_MODE_OFF
-        elif self._burner_status in ["Ignition starting", "Flame On"]:
+        elif self._burner_status in ["Ignition starting", "Cooling down"]:
             self._heating = False
 
     @property
