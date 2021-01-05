@@ -173,13 +173,15 @@ class DuepiEvoDevice(ClimateEntity):
         self._burner_status = data[0]
         self._current_temperature = data[1]
 
-        self._heating = True
-        self._hvac_mode = HVAC_MODE_HEAT
         if self._burner_status == "Off":
             self._heating = False
             self._hvac_mode = HVAC_MODE_OFF
         elif self._burner_status in ["Ignition starting", "Cooling down"]:
             self._heating = False
+            self._hvac_mode = HVAC_MODE_HEAT
+        else:
+            self._heating = True
+            self._hvac_mode = HVAC_MODE_HEAT
 
     @property
     def supported_features(self) -> int:
@@ -273,7 +275,7 @@ class DuepiEvoDevice(ClimateEntity):
     @property
     def hvac_action(self) -> Optional[str]:
         """Return the current running hvac operation."""
-        if "Eco" in self._burner_status:
+        if self._burner_status in ["Ignition starting", "Eco Idle"]:
             return CURRENT_HVAC_IDLE
         elif self._heating:
             return CURRENT_HVAC_HEAT
