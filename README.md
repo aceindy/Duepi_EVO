@@ -44,6 +44,9 @@ Confirmed working on:
 - Qlima Viola 85 S-Line
 - Kalor
 - Artel
+- Foco
+- Centrometal
+- AMG
 
 ## To do
 Get serial data for:
