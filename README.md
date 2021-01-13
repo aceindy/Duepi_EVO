@@ -13,9 +13,6 @@ Baudrate 115200, 8N1
 - Control target temperature.
 - Control system on/off.
 
-## Coming soon...
-- Control power stages
-
 ## Configuration
 Add the following to your `configuration.yaml` file:
 
@@ -44,7 +41,17 @@ logger:
     custom_components.duepi_evo: debug
 ```
 Confirmed working on:
-- Qlima Viola 85 S-Line 
+- Qlima Viola 85 S-Line
+- Kalor
+- Artel
+- Foco
+- Centrometal
+- AMG
+
+## To do
+Get serial data for:
+ - current setpoint from stove
+ - cuurent power level from stove
 
 Huge thanks go to pascal_bornat@hotmail.com
 who found the strings to control the EVO board and interfaced it to Jeedom
