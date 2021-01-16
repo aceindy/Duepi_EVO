@@ -47,6 +47,7 @@ Confirmed working on:
 - Foco
 - Centrometal
 - AMG
+- Interstove
 
 ## To do
 Get serial data for:
