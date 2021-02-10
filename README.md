@@ -52,7 +52,7 @@ Confirmed working on:
 ## To do
 Get serial data for:
  - current setpoint from stove
- - cuurent power level from stove
+ - current power level from stove
 
 Huge thanks go to pascal_bornat@hotmail.com
 who found the strings to control the EVO board and interfaced it to Jeedom
