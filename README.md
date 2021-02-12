@@ -51,6 +51,7 @@ Confirmed working on:
 - Centrometal
 - AMG
 - Interstove
+- Wamsler Westminster Quatro 6
 
 ## To do
 Get serial data for:
