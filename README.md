@@ -6,8 +6,9 @@ This is in no way associated with the company Duepi and comes with no guarantees
 
 ## Prerequisites
 ### Hardware
-You must have the ESPLink Module installed and flash it with https://github.com/jeelabs/esp-link.
-Baudrate 115200, 8N1
+This uses an ESP01 board with 5/3.3v adapter.
+You must have the ESP01 Module installed and flash it with https://github.com/jeelabs/esp-link.
+Baudrate 115200, 8N1.
 Pin layout is mentioned in the pdf (pcb, J8)
 
 ## Functionality
