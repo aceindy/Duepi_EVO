@@ -2,6 +2,7 @@
 
 ## Duepi-EVO
 The `Duepi EVO` climate platform is a reverse engineered implementation of the app which is controlling Pellet stove heaters using a Duepi Evo Wifi module.
+With this module it is possible to control your pellet stove with HomeAssistant.
 This is in no way associated with the company Duepi and comes with no guarantees or warranty. Use at your own risk.
 
 ## Prerequisites
