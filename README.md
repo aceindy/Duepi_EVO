@@ -54,9 +54,7 @@ Confirmed working on:
 - Wamsler Westminster Quatro 6
 
 ## To do
-Get serial data for:
- - current setpoint from stove
- - current power level from stove
+Store setpoint and current fan-speed as HA variable, as the stove does not transmit these.
 
 Huge thanks go to pascal_bornat@hotmail.com
 who found the strings to control the EVO board and interfaced it to Jeedom
