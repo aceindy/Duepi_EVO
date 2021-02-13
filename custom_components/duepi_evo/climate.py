@@ -290,27 +290,10 @@ class DuepiEvoDevice(ClimateEntity):
         sock.connect((self._host, self._port))
         if hvac_mode == "off":
             sock.send(set_powerOff.encode())
-            dataFromServer = sock.recv(10).decode()
-            dataFromServer = dataFromServer[1:9]
-            current_state = int(dataFromServer, 16)
-            if not (state_ack & current_state):
-                _LOGGER.error(
-                    "%s: unknown return value %s",
-                    self.name,
-                    dataFromServer,
-                )
             self._hvac_mode = HVAC_MODE_OFF
         elif hvac_mode == "heat":
             sock.send(set_powerOn.encode())
-            dataFromServer = sock.recv(10).decode()
-            dataFromServer = dataFromServer[1:9]
-            current_state = int(dataFromServer, 16)
-            if not (state_ack & current_state):
-                _LOGGER.error(
-                    "%s: unknown return value %s",
-                    self.name,
-                    dataFromServer,
-                )
+            self._hvac_mode = HVAC_MODE_HEAT
         sock.close()
 
     @property
