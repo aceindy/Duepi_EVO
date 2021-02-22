@@ -74,6 +74,7 @@ state_ack = 0x00000020
 state_off = 0x00000020
 state_start = 0x01000000
 state_on = 0x02000000
+state_clean = 0x04000000
 state_cool = 0x08000000
 state_eco = 0x10000000
 
@@ -119,6 +120,7 @@ class DuepiEvoDevice(ClimateEntity):
         try:
             with async_timeout.timeout(5):
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(3.0)
                 sock.connect((self._host, self._port))
                 # Get Burner status
                 sock.send(get_status.encode())
@@ -145,7 +147,7 @@ class DuepiEvoDevice(ClimateEntity):
                 if len(dataFromServer) != 0:
                     current_temperature = int(dataFromServer[1:5], 16) / 10.0
                 else:
-                    current_temperature = 0.0
+                    current_temperature = 20.0
 
                 sock.close()
 
@@ -241,6 +243,7 @@ class DuepiEvoDevice(ClimateEntity):
         )
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(3.0)
         sock.connect((self._host, self._port))
         setPointInt = int(target_temperature)
         codeHexStr = hex(setPointInt + 75)
@@ -250,15 +253,6 @@ class DuepiEvoDevice(ClimateEntity):
         datayy = data.replace("yy", codeHexStr[2:4])
         dataxy = datayy.replace("xx", setPointHexStr[2:4])
         sock.send(dataxy.encode())
-        dataFromServer = sock.recv(10).decode()
-        dataFromServer = dataFromServer[1:9]
-        current_state = int(dataFromServer, 16)
-        if not (state_ack & current_state):
-            _LOGGER.error(
-                "%s: Unable to set target temp to %s°C",
-                self._name,
-                str(target_temperature),
-            )
         sock.close()
         self._target_temperature = target_temperature
 
@@ -287,6 +281,7 @@ class DuepiEvoDevice(ClimateEntity):
         _LOGGER.debug("%s: Set hvac mode to %s", self.name, str(hvac_mode))
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(3.0)
         sock.connect((self._host, self._port))
         if hvac_mode == "off":
             sock.send(set_powerOff.encode())
@@ -312,6 +307,7 @@ class DuepiEvoDevice(ClimateEntity):
 
         fan_speed = int(fan_mode)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(3.0)
         sock.connect((self._host, self._port))
 
         codeHexStr = hex(88 + fan_speed)
