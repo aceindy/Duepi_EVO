@@ -147,7 +147,7 @@ class DuepiEvoDevice(ClimateEntity):
                 if len(dataFromServer) != 0:
                     current_temperature = int(dataFromServer[1:5], 16) / 10.0
                 else:
-                    current_temperature = 20.0
+                    current_temperature = 21.0
 
                 sock.close()
 
@@ -175,14 +175,13 @@ class DuepiEvoDevice(ClimateEntity):
         self._burner_status = data[0]
         self._current_temperature = data[1]
 
+        self._heating = True
+        self._hvac_mode = HVAC_MODE_HEAT
         if self._burner_status == "Off":
             self._heating = False
             self._hvac_mode = HVAC_MODE_OFF
         elif self._burner_status in ["Ignition starting", "Cooling down"]:
             self._heating = False
-            self._hvac_mode = HVAC_MODE_HEAT
-        else:
-            self._heating = True
             self._hvac_mode = HVAC_MODE_HEAT
 
     @property
@@ -253,6 +252,15 @@ class DuepiEvoDevice(ClimateEntity):
         datayy = data.replace("yy", codeHexStr[2:4])
         dataxy = datayy.replace("xx", setPointHexStr[2:4])
         sock.send(dataxy.encode())
+        dataFromServer = sock.recv(10).decode()
+        dataFromServer = dataFromServer[1:9]
+        current_state = int(dataFromServer, 16)
+        if not (state_ack & current_state):
+            _LOGGER.error(
+                "%s: Unable to set target temp to %s°C",
+                self._name,
+                str(target_temperature),
+            )
         sock.close()
         self._target_temperature = target_temperature
 
@@ -269,7 +277,7 @@ class DuepiEvoDevice(ClimateEntity):
     @property
     def hvac_action(self) -> Optional[str]:
         """Return the current running hvac operation."""
-        if self._burner_status in ["Ignition starting", "Eco Idle"]:
+        if self._burner_status in ["Eco Idle"]:
             return CURRENT_HVAC_IDLE
         elif self._heating:
             return CURRENT_HVAC_HEAT
@@ -285,9 +293,27 @@ class DuepiEvoDevice(ClimateEntity):
         sock.connect((self._host, self._port))
         if hvac_mode == "off":
             sock.send(set_powerOff.encode())
+            dataFromServer = sock.recv(10).decode()
+            dataFromServer = dataFromServer[1:9]
+            current_state = int(dataFromServer, 16)
+            if not (state_ack & current_state):
+                _LOGGER.error(
+                    "%s: unknown return value %s",
+                    self.name,
+                    dataFromServer,
+                )
             self._hvac_mode = HVAC_MODE_OFF
         elif hvac_mode == "heat":
             sock.send(set_powerOn.encode())
+            dataFromServer = sock.recv(10).decode()
+            dataFromServer = dataFromServer[1:9]
+            current_state = int(dataFromServer, 16)
+            if not (state_ack & current_state):
+                _LOGGER.error(
+                    "%s: unknown return value %s",
+                    self.name,
+                    dataFromServer,
+                )
             self._hvac_mode = HVAC_MODE_HEAT
         sock.close()
 
