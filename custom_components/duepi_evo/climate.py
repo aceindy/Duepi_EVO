@@ -80,20 +80,17 @@ state_eco = 0x10000000
 
 get_status = "\x1bRD90005f&"
 get_temperature = "\x1bRD100057&"
+get_setpoint = "\x1bRC60005B&"
 set_temperature = "\x1bRF2xx0yy&"
 set_powerLevel = "\x1bRF00x0yy&"
 set_powerOff = "\x1bRF000058&"
 set_powerOn = "\x1bRF001059&"
 
-# pylint: disable=unused-argument
 async def async_setup_platform(hass, config, add_devices, discovery_info=None):
     """Setup the Duepi EVO"""
     session = async_get_clientsession(hass)
     add_devices([DuepiEvoDevice(session, config)], True)
 
-
-# pylint: disable=too-many-instance-attributes
-# pylint: disable=bad-staticmethod-argument
 class DuepiEvoDevice(ClimateEntity):
     """Representation of a DuepiEvoDevice."""
 
@@ -106,7 +103,7 @@ class DuepiEvoDevice(ClimateEntity):
         self._min_temp = config.get(CONF_MIN_TEMP)
         self._max_temp = config.get(CONF_MAX_TEMP)
         self._current_temperature = None
-        self._target_temperature = None
+        self._current_setpoint = None
         self._heating = False
         self._burner_status = None
         self._hvac_mode = CURRENT_HVAC_OFF
@@ -122,12 +119,12 @@ class DuepiEvoDevice(ClimateEntity):
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(3.0)
                 sock.connect((self._host, self._port))
+
                 # Get Burner status
                 sock.send(get_status.encode())
                 dataFromServer = sock.recv(10).decode()
                 dataFromServer = dataFromServer[1:9]
                 current_state = int(dataFromServer, 16)
-
                 if state_start & current_state:
                     status = "Ignition starting"
                 elif state_on & current_state:
@@ -149,18 +146,24 @@ class DuepiEvoDevice(ClimateEntity):
                 else:
                     current_temperature = 21.0
 
+                # Get temperature setpoint
+                sock.send(get_setpoint.encode())
+                dataFromServer = sock.recv(10).decode()
+                if len(dataFromServer) != 0:
+                    current_setpoint = int(dataFromServer[1:5], 16) / 10.0
                 sock.close()
 
         except asyncio.TimeoutError:
             _LOGGER.error("Error occurred while polling using host: %s", self._host)
             return None
 
-        result = [status, current_temperature]
+        result = [status, current_temperature, current_setpoint]
         _LOGGER.debug(
-            "%s: Received burner: %s, ambient temp: %s",
+            "%s: Received State: %s, Ambient temp: %s, Setpoint temp: %s",
             self._name,
             status,
             str(current_temperature),
+            str(current_setpoint),
         )
         return result
 
@@ -174,7 +177,7 @@ class DuepiEvoDevice(ClimateEntity):
         data = await self.get_data(self)
         self._burner_status = data[0]
         self._current_temperature = data[1]
-
+#        self._current_setpoint = data[2] #ignore for now...
         self._heating = True
         self._hvac_mode = HVAC_MODE_HEAT
         if self._burner_status == "Off":
@@ -213,14 +216,14 @@ class DuepiEvoDevice(ClimateEntity):
     def target_temperature(self) -> Optional[float]:
         """Return the temperature we try to reach."""
         # Use environment temperature is set to None (bug)
-        if self._target_temperature is None:
-            self._target_temperature = int(self._current_temperature)
+        if self._current_setpoint is None:
+            self._current_setpoint = int(self._current_temperature)
             _LOGGER.debug(
                 "%s Setpoint unknown, using _current_temperature %s",
                 self._name,
-                str(self._target_temperature),
+                str(self._current_setpoint),
             )
-        return self._target_temperature
+        return self._current_setpoint
 
     @property
     def min_temp(self) -> float:
@@ -252,17 +255,8 @@ class DuepiEvoDevice(ClimateEntity):
         datayy = data.replace("yy", codeHexStr[2:4])
         dataxy = datayy.replace("xx", setPointHexStr[2:4])
         sock.send(dataxy.encode())
-        dataFromServer = sock.recv(10).decode()
-        dataFromServer = dataFromServer[1:9]
-        current_state = int(dataFromServer, 16)
-        if not (state_ack & current_state):
-            _LOGGER.error(
-                "%s: Unable to set target temp to %s°C",
-                self._name,
-                str(target_temperature),
-            )
         sock.close()
-        self._target_temperature = target_temperature
+        self._current_setpoint = target_temperature
 
     @property
     def hvac_mode(self) -> str:
@@ -293,27 +287,9 @@ class DuepiEvoDevice(ClimateEntity):
         sock.connect((self._host, self._port))
         if hvac_mode == "off":
             sock.send(set_powerOff.encode())
-            dataFromServer = sock.recv(10).decode()
-            dataFromServer = dataFromServer[1:9]
-            current_state = int(dataFromServer, 16)
-            if not (state_ack & current_state):
-                _LOGGER.error(
-                    "%s: unknown return value %s",
-                    self.name,
-                    dataFromServer,
-                )
             self._hvac_mode = HVAC_MODE_OFF
         elif hvac_mode == "heat":
             sock.send(set_powerOn.encode())
-            dataFromServer = sock.recv(10).decode()
-            dataFromServer = dataFromServer[1:9]
-            current_state = int(dataFromServer, 16)
-            if not (state_ack & current_state):
-                _LOGGER.error(
-                    "%s: unknown return value %s",
-                    self.name,
-                    dataFromServer,
-                )
             self._hvac_mode = HVAC_MODE_HEAT
         sock.close()
 
@@ -330,15 +306,13 @@ class DuepiEvoDevice(ClimateEntity):
     async def async_set_fan_mode(self, fan_mode: str) -> None:
         self._current_fan_mode = fan_mode
         _LOGGER.debug("%s setting fanSpeed to %s", self.name, str(fan_mode))
-
         fan_speed = int(fan_mode)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(3.0)
         sock.connect((self._host, self._port))
-
         codeHexStr = hex(88 + fan_speed)
-
         data_yy = set_powerLevel.replace("yy", codeHexStr[2:4])
         powerlevelHexStr = hex(fan_speed)
         data_xx = data_yy.replace("x", powerlevelHexStr[2:3])
         sock.send(data_xx.encode())
+        sock.close()
