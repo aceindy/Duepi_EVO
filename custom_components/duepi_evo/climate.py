@@ -80,20 +80,17 @@ state_eco = 0x10000000
 
 get_status = "\x1bRD90005f&"
 get_temperature = "\x1bRD100057&"
+get_setpoint = "\x1bRC60005B&"
 set_temperature = "\x1bRF2xx0yy&"
 set_powerLevel = "\x1bRF00x0yy&"
 set_powerOff = "\x1bRF000058&"
 set_powerOn = "\x1bRF001059&"
 
-# pylint: disable=unused-argument
 async def async_setup_platform(hass, config, add_devices, discovery_info=None):
     """Setup the Duepi EVO"""
     session = async_get_clientsession(hass)
     add_devices([DuepiEvoDevice(session, config)], True)
 
-
-# pylint: disable=too-many-instance-attributes
-# pylint: disable=bad-staticmethod-argument
 class DuepiEvoDevice(ClimateEntity):
     """Representation of a DuepiEvoDevice."""
 
@@ -122,12 +119,12 @@ class DuepiEvoDevice(ClimateEntity):
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(3.0)
                 sock.connect((self._host, self._port))
+
                 # Get Burner status
                 sock.send(get_status.encode())
                 dataFromServer = sock.recv(10).decode()
                 dataFromServer = dataFromServer[1:9]
                 current_state = int(dataFromServer, 16)
-
                 if state_start & current_state:
                     status = "Ignition starting"
                 elif state_on & current_state:
@@ -157,7 +154,7 @@ class DuepiEvoDevice(ClimateEntity):
 
         result = [status, current_temperature]
         _LOGGER.debug(
-            "%s: Received burner: %s, ambient temp: %s",
+            "%s: Received burner: %s, Ambient temp: %s",
             self._name,
             status,
             str(current_temperature),
@@ -277,7 +274,7 @@ class DuepiEvoDevice(ClimateEntity):
     @property
     def hvac_action(self) -> Optional[str]:
         """Return the current running hvac operation."""
-        if self._burner_status in ["Eco Idle"]:
+        if self._burner_status in ["Ignition starting", "Eco Idle"]:
             return CURRENT_HVAC_IDLE
         elif self._heating:
             return CURRENT_HVAC_HEAT
@@ -335,10 +332,9 @@ class DuepiEvoDevice(ClimateEntity):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(3.0)
         sock.connect((self._host, self._port))
-
         codeHexStr = hex(88 + fan_speed)
-
         data_yy = set_powerLevel.replace("yy", codeHexStr[2:4])
         powerlevelHexStr = hex(fan_speed)
         data_xx = data_yy.replace("x", powerlevelHexStr[2:3])
         sock.send(data_xx.encode())
+        sock.close()

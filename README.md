@@ -27,8 +27,8 @@ climate:
     host: 192.168.1.123
     port: 23
     scan_interval: 60
-    min_temperature: 20
-    max_temperature: 30
+    min_temp: 20
+    max_temp: 30
 ```
 
 Configuration variables:
