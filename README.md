@@ -58,3 +58,6 @@ Store setpoint and current fan-speed as HA variable, as the stove does not trans
 
 Huge thanks go to pascal_bornat@hotmail.com
 who found the strings to control the EVO board and interfaced it to Jeedom
+
+# [Buy Me A Coffee](https://ko-fi.com/aceindy)! :coffee:
+
