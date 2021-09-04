@@ -11,6 +11,6 @@
     "@aceindy"
   ],
   "requirements": []
-  "iot_class" : "climate",
+  "iot_class": "climate",
   "version":"2021.09.04"
 }
