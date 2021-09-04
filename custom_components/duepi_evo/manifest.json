@@ -1,11 +1,16 @@
 {
   "domain": "duepi_evo",
   "name": "Duepi Evo",
+  "ssdp": [],
+  "zeroconf": [],
+  "homekit": {},
   "documentation": "https://github.com/aceindy/Duepi_EVO",
   "issue_tracker": "https://github.com/aceindy/Duepi_EVO/issues",
   "dependencies": [],
-  "codeowners": ["@aceindy"],
-  "version":"1.0",
+  "codeowners": [
+    "@aceindy"
+  ],
   "requirements": []
-  "iot_class" : "climate"
+  "iot_class" : "climate",
+  "version":"2021.09.04"
 }
