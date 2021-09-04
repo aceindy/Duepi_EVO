@@ -7,4 +7,5 @@
   "codeowners": ["@aceindy"],
   "version":"1.0",
   "requirements": []
+  "iot_class" : "climate"
 }
