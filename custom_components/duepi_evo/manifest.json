@@ -1,9 +1,7 @@
 {
   "domain": "duepi_evo",
   "name": "Duepi Evo",
-  "ssdp": [],
-  "zeroconf": [],
-  "homekit": {},
+  "version":"2021.09.04",
   "documentation": "https://github.com/aceindy/Duepi_EVO",
   "issue_tracker": "https://github.com/aceindy/Duepi_EVO/issues",
   "dependencies": [],
@@ -11,6 +9,6 @@
     "@aceindy"
   ],
   "requirements": []
-  "iot_class": "local_poll",
-  "version":"2021.09.04"
+  "homeassistant": "2021.8.0",
+  "iot_class": "local_poll"
 }
