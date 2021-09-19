@@ -1,9 +1,13 @@
 {
   "domain": "duepi_evo",
   "name": "Duepi Evo",
+  "version":"2021.09.04",
   "documentation": "https://github.com/aceindy/Duepi_EVO",
   "issue_tracker": "https://github.com/aceindy/Duepi_EVO/issues",
   "dependencies": [],
-  "codeowners": ["@aceindy"],
-  "requirements": []
+  "codeowners": [
+    "@aceindy"
+  ],
+  "requirements": [],
+  "iot_class": "local_polling"
 }
