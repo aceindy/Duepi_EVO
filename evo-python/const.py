@@ -19,6 +19,8 @@ str_ack =      "00000020"       # both acknoledge and off
 # Get data
 get_status =      "\x1bRD90005f&"
 
+get_setpoint =    "\x1bRC60005B&"
+
 get_temperature = "\x1bRD100057&"
 set_temperature = "\x1bRF2xx0yy&"
 
