@@ -82,7 +82,7 @@ get_status = "\x1bRD90005f&"
 get_temperature = "\x1bRD100057&"
 get_setpoint = "\x1bRC60005B&"
 set_temperature = "\x1bRF2xx0yy&"
-set_powerLevel = "\x1bRF00x0yy&"
+set_powerLevel = "\x1bRF00xx0yy&"
 set_powerOff = "\x1bRF000058&"
 set_powerOn = "\x1bRF001059&"
 
@@ -335,6 +335,6 @@ class DuepiEvoDevice(ClimateEntity):
         codeHexStr = hex(88 + fan_speed)
         data_yy = set_powerLevel.replace("yy", codeHexStr[2:4])
         powerlevelHexStr = hex(fan_speed)
-        data_xx = data_yy.replace("x", powerlevelHexStr[2:3])
+        data_xx = data_yy.replace("xx", powerlevelHexStr[2:3])
         sock.send(data_xx.encode())
         sock.close()
