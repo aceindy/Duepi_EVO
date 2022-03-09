@@ -337,4 +337,13 @@ class DuepiEvoDevice(ClimateEntity):
         powerlevelHexStr = hex(fan_speed)
         data_xx = data_yy.replace("x", powerlevelHexStr[2:3])
         sock.send(data_xx.encode())
+        dataFromServer = sock.recv(10).decode()
+        dataFromServer = dataFromServer[1:9]
+        current_state = int(dataFromServer, 16)
+        if not (state_ack & current_state):
+            _LOGGER.error(
+                "%s: Unable to set fan mode to %s",
+                self._name,
+                str(fan_mode),
+            )
         sock.close()
