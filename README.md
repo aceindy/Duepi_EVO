@@ -15,6 +15,7 @@ Pin layout is mentioned in the pdf (pcb, J8)
 ## Functionality
 - Control target temperature.
 - Control system on/off.
+- Control fan speed (only when actual temperature below target temperature) 1-5
 
 ## Configuration
 Add the following to your `configuration.yaml` file:
@@ -52,6 +53,7 @@ Confirmed working on:
 - AMG
 - Interstove
 - Wamsler Westminster Quatro 6
+- Duroflame Rembrand
 
 ## To do
 Store setpoint and current fan-speed as HA variable, as the stove does not transmit these.
