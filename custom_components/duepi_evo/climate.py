@@ -84,7 +84,7 @@ get_setpoint = "\x1bRC60005B&"
 set_temperature = "\x1bRF2xx0yy&"
 set_powerLevel = "\x1bRF00x0yy&"
 set_powerOff = "\x1bRF000058&"
-set_powerOn = "\x1bRF001059&"
+set_powerOn = "\x1bRF00505D&"
 
 async def async_setup_platform(hass, config, add_devices, discovery_info=None):
     """Setup the Duepi EVO"""
