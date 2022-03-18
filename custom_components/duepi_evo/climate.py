@@ -181,6 +181,7 @@ class DuepiEvoDevice(ClimateEntity):
         data = await self.get_data(self)
         self._burner_status = data[0]
         self._current_temperature = data[1]
+        self._fan_mode = data[2]
 
         self._heating = True
         self._hvac_mode = HVAC_MODE_HEAT
