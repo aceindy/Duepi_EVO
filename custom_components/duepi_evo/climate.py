@@ -86,8 +86,8 @@ set_powerLevel = "\x1bRF00xx0yy&"
 set_powerOff = "\x1bRF000058&"
 set_powerOn = "\x1bRF001059&"
 set_pelletcor = "\x1bRD50005B&"
-set_extractorcor = "\x1bRD50005B&"
-set_augertcor = "\x1bRD50005A&"
+set_extractcor = "\x1bRD50005B&"
+set_augercor = "\x1bRD50005A&"
 
 async def async_setup_platform(hass, config, add_devices, discovery_info=None):
     """Setup the Duepi EVO"""
