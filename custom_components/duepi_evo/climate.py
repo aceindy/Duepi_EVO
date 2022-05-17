@@ -78,9 +78,10 @@ state_clean = 0x04000000
 state_cool = 0x08000000
 state_eco = 0x10000000
 
-get_status = "\x1bRD90005f&"
+get_status      = "\x1bRD90005f&"
 get_temperature = "\x1bRD100057&"
-get_setpoint = "\x1bRC60005B&"
+get_setpoint    = "\x1bRC60005B&"
+get_pelletspeed = "\x1bRD40005A&"
 set_temperature = "\x1bRF2xx0yy&"
 set_powerLevel = "\x1bRF00xx0yy&"
 set_powerOff = "\x1bRF000058&"
@@ -149,18 +150,27 @@ class DuepiEvoDevice(ClimateEntity):
                 else:
                     current_temperature = 21.0
 
+                # Get pellet speed
+                sock.send(get_pelletspeed.encode())
+                dataFromServer = sock.recv(10).decode()
+                if len(dataFromServer) != 0:
+                    fan_mode = int(dataFromServer[1:5], 16)
+                else:
+                    fan_mode = None
+              
                 sock.close()
 
         except asyncio.TimeoutError:
             _LOGGER.error("Error occurred while polling using host: %s", self._host)
             return None
 
-        result = [status, current_temperature]
+        result = [status, current_temperature, fan_mode]
         _LOGGER.debug(
-            "%s: Received burner: %s, Ambient temp: %s",
+            "%s: Received burner: %s, Ambient temp: %s, Fan speed: %s",
             self._name,
             status,
             str(current_temperature),
+            str(fan_mode)
         )
         return result
 
@@ -174,6 +184,7 @@ class DuepiEvoDevice(ClimateEntity):
         data = await self.get_data(self)
         self._burner_status = data[0]
         self._current_temperature = data[1]
+        self._fan_mode = data[2]
 
         self._heating = True
         self._hvac_mode = HVAC_MODE_HEAT
