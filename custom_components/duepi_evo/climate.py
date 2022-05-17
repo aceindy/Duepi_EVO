@@ -83,9 +83,12 @@ get_temperature = "\x1bRD100057&"
 get_setpoint    = "\x1bRC60005B&"
 get_pelletspeed = "\x1bRD40005A&"
 set_temperature = "\x1bRF2xx0yy&"
-set_powerLevel  = "\x1bRF00x0yy&"
-set_powerOff    = "\x1bRF000058&"
-set_powerOn     = "\x1bRF00505D&"
+set_powerLevel = "\x1bRF00xx0yy&"
+set_powerOff = "\x1bRF000058&"
+set_powerOn = "\x1bRF001059&"
+set_pelletcor = "\x1bRD50005B&"
+set_extractcor = "\x1bRD50005B&"
+set_augercor = "\x1bRD50005A&"
 
 async def async_setup_platform(hass, config, add_devices, discovery_info=None):
     """Setup the Duepi EVO"""
@@ -346,6 +349,15 @@ class DuepiEvoDevice(ClimateEntity):
         codeHexStr = hex(88 + fan_speed)
         data_yy = set_powerLevel.replace("yy", codeHexStr[2:4])
         powerlevelHexStr = hex(fan_speed)
-        data_xx = data_yy.replace("x", powerlevelHexStr[2:3])
+        data_xx = data_yy.replace("xx", powerlevelHexStr[2:3])
         sock.send(data_xx.encode())
+        dataFromServer = sock.recv(10).decode()
+        dataFromServer = dataFromServer[1:9]
+        current_state = int(dataFromServer, 16)
+        if not (state_ack & current_state):
+            _LOGGER.error(
+                "%s: Unable to set fan mode to %s",
+                self._name,
+                str(fan_mode),
+            )
         sock.close()
