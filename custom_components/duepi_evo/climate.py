@@ -178,6 +178,7 @@ class DuepiEvoDevice(ClimateEntity):
             "%s: Received burner: %s, Ambient temp: %s, Set temp: %s, Fan speed: %s",
             self._name,
             status,
+            str(target_temperature),
             str(current_temperature),
             str(fan_mode)
         )
