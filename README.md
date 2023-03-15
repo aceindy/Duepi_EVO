@@ -12,8 +12,6 @@ You must have the ESP01 Module installed and flash it with https://github.com/je
 Baudrate 115200, 8N1.
 Pin layout is mentioned in the pdf (pcb, J8)
 
-Optionally one can use the Wemos D1 flashed with espeasy (https://www.letscontrolit.com/wiki/index.php/ESPEasy). This device has a 5V input and integrated CH340 for easy flashing. The only tweak I needed was to add 5ms timeout delay in the serial device settings of espeasy to get robust data from my pellet stove ( Duroflame Rembrand). In Esp_easy flashed device select the Device: Communication - Serial Server (https://www.letscontrolit.com/wiki/index.php?title=Ser2Net) and fill in the appropiate fields (harware serial GPIO-3 and -1, port 1234 (or any) baud rate 115200, serial config 8N1,RX receive 5ms, 256 buffer). 
-
 ## Functionality
 - Control target temperature.
 - Control system on/off.
