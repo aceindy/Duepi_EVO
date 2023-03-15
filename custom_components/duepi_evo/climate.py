@@ -128,7 +128,6 @@ class DuepiEvoDevice(ClimateEntity):
                 sock.send(get_status.encode())
                 dataFromServer = sock.recv(10).decode()
                 dataFromServer = dataFromServer[1:9]
-                _LOGGER.debug("Burner code: %s", dataFromServer)
                 current_state = int(dataFromServer, 16)
                 if state_start & current_state:
                     status = "Ignition starting"
@@ -151,14 +150,6 @@ class DuepiEvoDevice(ClimateEntity):
                 else:
                     current_temperature = 21.0
 
-                # Get Setpoint temperature
-                sock.send(get_setpoint.encode())
-                dataFromServer = sock.recv(10).decode()
-                if len(dataFromServer) != 0:
-                    target_temperature = int(dataFromServer[1:5], 16)
-                else:
-                    target_temperature = 21.0
-                    
                 # Get pellet speed
                 sock.send(get_pelletspeed.encode())
                 dataFromServer = sock.recv(10).decode()
@@ -173,12 +164,11 @@ class DuepiEvoDevice(ClimateEntity):
             _LOGGER.error("Error occurred while polling using host: %s", self._host)
             return None
 
-        result = [status, current_temperature, target_temperature, fan_mode]
+        result = [status, current_temperature, fan_mode]
         _LOGGER.debug(
-            "%s: Received burner: %s, Ambient temp: %s, Set temp: %s, Fan speed: %s",
+            "%s: Received burner: %s, Ambient temp: %s, Fan speed: %s",
             self._name,
             status,
-            str(target_temperature),
             str(current_temperature),
             str(fan_mode)
         )
@@ -194,8 +184,7 @@ class DuepiEvoDevice(ClimateEntity):
         data = await self.get_data(self)
         self._burner_status = data[0]
         self._current_temperature = data[1]
-        self._target_temperature= data[2]
-        self._current_fan_mode = data[3]
+        self._fan_mode = data[2]
 
         self._heating = True
         self._hvac_mode = HVAC_MODE_HEAT
@@ -237,7 +226,7 @@ class DuepiEvoDevice(ClimateEntity):
     @property
     def target_temperature(self) -> Optional[float]:
         """Return the temperature we try to reach."""
-        # Use environment temperature is set to None (bug), can be removed???
+        # Use environment temperature is set to None (bug)
         if self._target_temperature is None:
             self._target_temperature = int(self._current_temperature)
             _LOGGER.debug(
