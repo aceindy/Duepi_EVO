@@ -210,7 +210,7 @@ class DuepiEvoDevice(ClimateEntity):
         self._current_temperature = data[1]
         self._fan_mode = data[2]
         if support_setpoint == True:
-            self._fan_mode = data[3]
+            self._target_temperature = data[3]
 
         self._heating = True
         self._hvac_mode = HVAC_MODE_HEAT
