@@ -69,7 +69,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     }
 )
 
-# constants
+# global constants
 state_ack = 0x00000020
 state_off = 0x00000020
 state_start = 0x01000000
@@ -89,6 +89,9 @@ set_powerOn = "\x1bRF001059&"
 set_pelletcor = "\x1bRD50005B&"
 set_extractcor = "\x1bRD50005B&"
 set_augercor = "\x1bRD50005A&"
+
+# Set to True for stoves that support setpoint retrieval
+support_setpoint = False
 
 async def async_setup_platform(hass, config, add_devices, discovery_info=None):
     """Setup the Duepi EVO"""
@@ -117,6 +120,7 @@ class DuepiEvoDevice(ClimateEntity):
 
     @staticmethod
     async def get_data(self):
+        global support_setpoint
         """Get the data from the device"""
         try:
             with async_timeout.timeout(5):
@@ -157,21 +161,41 @@ class DuepiEvoDevice(ClimateEntity):
                     fan_mode = int(dataFromServer[1:5], 16)
                 else:
                     fan_mode = None
-              
+
+                # Get Setpoint temperature
+                sock.send(get_setpoint.encode())
+                dataFromServer = sock.recv(10).decode()
+                if len(dataFromServer) != 0:
+                    target_temperature = int(dataFromServer[1:5], 16)
+                if target_temperature != 0:
+                    support_setpoint = True
+
                 sock.close()
 
         except asyncio.TimeoutError:
             _LOGGER.error("Error occurred while polling using host: %s", self._host)
             return None
 
-        result = [status, current_temperature, fan_mode]
-        _LOGGER.debug(
-            "%s: Received burner: %s, Ambient temp: %s, Fan speed: %s",
-            self._name,
-            status,
-            str(current_temperature),
-            str(fan_mode)
-        )
+        if support_setpoint == False:
+            result = [status, current_temperature, fan_mode]
+            _LOGGER.debug(
+                "%s: Received burner: %s, Ambient temp: %s, Fan speed: %s",
+                self._name,
+                status,
+                str(current_temperature),
+                str(fan_mode)
+            )
+        else:
+            result = [status, current_temperature, fan_mode, target_temperature]
+            _LOGGER.debug(
+                "%s: Received burner: %s, Ambient temp: %s, Fan speed: %s, Setpoint temp: %s",
+                self._name,
+                status,
+                str(current_temperature),
+                str(fan_mode),
+                str(target_temperature)
+            )
+
         return result
 
     @property
@@ -185,6 +209,8 @@ class DuepiEvoDevice(ClimateEntity):
         self._burner_status = data[0]
         self._current_temperature = data[1]
         self._fan_mode = data[2]
+        if support_setpoint == True:
+            self._fan_mode = data[3]
 
         self._heating = True
         self._hvac_mode = HVAC_MODE_HEAT
@@ -230,7 +256,7 @@ class DuepiEvoDevice(ClimateEntity):
         if self._target_temperature is None:
             self._target_temperature = int(self._current_temperature)
             _LOGGER.debug(
-                "%s Setpoint unknown, using _current_temperature %s",
+                "%s Setpoint retrieval not supported by this stove, using _current_temperature %s",
                 self._name,
                 str(self._target_temperature),
             )
@@ -250,6 +276,9 @@ class DuepiEvoDevice(ClimateEntity):
         """Set target temperature."""
         target_temperature = kwargs.get(ATTR_TEMPERATURE)
         if target_temperature is None:
+            _LOGGER.debug(
+                "%s: Unable to use target temp", self._name
+            )
             return
         _LOGGER.debug(
             "%s: Set target temp to %s°C", self._name, str(target_temperature)
