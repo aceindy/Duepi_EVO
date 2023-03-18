@@ -49,6 +49,14 @@ except ImportError:
 _LOGGER = logging.getLogger(__name__)
 
 SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE | SUPPORT_FAN_MODE
+"""
+Supported hvac modes:
+
+- HVAC_MODE_HEAT: Heat to a target temperature (schedule off)
+- HVAC_MODE_OFF:  The device runs in a continuous energy savings mode. If
+                  configured as one of the supported hvac modes this mode
+                  can be used to activate the vacation mode
+"""
 SUPPORT_MODES = [HVAC_MODE_HEAT, HVAC_MODE_OFF]
 
 DEFAULT_NAME = "Duepi EVO"
@@ -137,6 +145,8 @@ class DuepiEvoDevice(ClimateEntity):
                     status = "Ignition starting"
                 elif state_on & current_state:
                     status = "Flame On"
+                elif state_clean & current_state:
+                    status = "Cleaning"
                 elif state_eco & current_state:
                     status = "Eco Idle"
                 elif state_cool & current_state:
@@ -220,9 +230,6 @@ class DuepiEvoDevice(ClimateEntity):
         elif self._burner_status in ["Cooling down"]:
             self._heating = True
             self._hvac_mode = HVAC_MODE_OFF
-        elif self._burner_status in ["Ignition starting"]:
-            self._heating = True
-            self._hvac_mode = HVAC_MODE_HEAT
 
     @property
     def supported_features(self) -> int:
@@ -320,7 +327,7 @@ class DuepiEvoDevice(ClimateEntity):
     @property
     def hvac_action(self) -> Optional[str]:
         """Return the current running hvac operation."""
-        if self._burner_status in ["Ignition starting", "Eco Idle"]:
+        if self._burner_status in ["Eco Idle"]:
             return CURRENT_HVAC_IDLE
         elif self._heating:
             return CURRENT_HVAC_HEAT
@@ -393,3 +400,4 @@ class DuepiEvoDevice(ClimateEntity):
                 str(fan_mode),
             )
         sock.close()
+
