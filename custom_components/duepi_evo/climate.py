@@ -28,12 +28,14 @@ from homeassistant.components.climate.const import (
     SUPPORT_FAN_MODE,
     SUPPORT_TARGET_TEMPERATURE,
 )
+
 from homeassistant.const import (
     ATTR_TEMPERATURE,
     CONF_HOST,
     CONF_NAME,
     CONF_PORT,
     TEMP_CELSIUS,
+    REVOLUTIONS_PER_MINUTE
 )
 
 from homeassistant.core import HomeAssistant
