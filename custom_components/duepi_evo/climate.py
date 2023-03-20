@@ -35,11 +35,6 @@ from homeassistant.const import (
     CONF_PORT,
     TEMP_CELSIUS,
 )
-from homeassistant.components.sensor import (
-    SensorDeviceClass,
-    SensorEntity,
-    SensorStateClass,
-)
 
 from homeassistant.core import HomeAssistant
 
