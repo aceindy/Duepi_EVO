@@ -426,7 +426,7 @@ class DuepiEvoDevice(ClimateEntity):
     @property
     def hvac_action(self) -> Optional[str]:
         """Return the current running hvac operation."""
-        if self._burner_status in ["Eco Idle","Cooling down"]:
+        if self._burner_status in ["Eco Idle"]:
             return CURRENT_HVAC_IDLE
         elif self._heating:
             return CURRENT_HVAC_HEAT
