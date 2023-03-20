@@ -219,7 +219,7 @@ class DuepiEvoDevice(ClimateEntity):
                 if len(dataFromServer) != 0:
                     error_code_decimal = int(dataFromServer[4:6], 16)
                 if error_code_decimal == 0:
-                    error_code = "No Error"
+                    error_code = "All OK"
                 elif error_code_decimal == 1:
                     error_code = "Ignition failure"
                 elif error_code_decimal == 2:
