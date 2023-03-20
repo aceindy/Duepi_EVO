@@ -333,12 +333,10 @@ class DuepiEvoDevice(ClimateEntity):
 
     @property
     def extra_state_attributes(self) -> Dict[str, Any]:
-        temp = "°C"
-        rpm = "Rpm"
         return {
             "burner_status": self._burner_status,
-            "Flug_gas_temp": f"{self._flugas_temp} {temp}",
-            "Exh_fan_speed": f"{self._exhaust_fan_speed} {rpm}",
+            "Flug_gas_temp": f"{self._flugas_temp} {TEMP_CELSIUS}",
+            "Exh_fan_speed": f"{self._exhaust_fan_speed} {REVOLUTIONS_PER_MINUTE}",
             "error_code": self._error_code
         }
 
