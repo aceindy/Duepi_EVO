@@ -41,8 +41,6 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 import homeassistant.helpers.config_validation as cv
 
 try:
@@ -97,9 +95,9 @@ get_status      = "\x1bRD90005f&"
 get_temperature = "\x1bRD100057&"
 get_setpoint    = "\x1bRC60005B&"
 get_pelletspeed = "\x1bRD40005A&"
-get_flugastemp  = "\x1bRD000056&"  #--> Flugas temperature  0085002D& ~133 degs 
-get_fanspeed    = "\x1bREF0006D&"  #--> fan speed 00AF0047&  ~1750 rpm
-get_errorstate  = "\x1bRDA00067&"   #--> Get error code
+get_flugastemp  = "\x1bRD000056&" 
+get_fanspeed    = "\x1bREF0006D&" 
+get_errorstate  = "\x1bRDA00067&"
 
 set_temperature = "\x1bRF2xx0yy&"
 set_powerLevel = "\x1bRF00xx0yy&"
@@ -335,13 +333,12 @@ class DuepiEvoDevice(ClimateEntity):
 
     @property
     def extra_state_attributes(self) -> Dict[str, Any]:
-        """
-        Return the current state of the burner, Flug_gas_temp, Exh_fan_speed, error_code
-        """
+        temp = "°C"
+        rpm = "Rpm"
         return {
             "burner_status": self._burner_status,
-            "Flug_gas_temp": self._flugas_temp,
-            "Exh_fan_speed": self._exhaust_fan_speed,
+            "Flug_gas_temp": f"{self._flugas_temp} {temp}",
+            "Exh_fan_speed": f"{self._exhaust_fan_speed} {rpm}",
             "error_code": self._error_code
         }
 
