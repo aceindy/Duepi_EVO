@@ -38,8 +38,6 @@ from homeassistant.const import (
     REVOLUTIONS_PER_MINUTE
 )
 
-from homeassistant.core import HomeAssistant
-
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
 
@@ -494,4 +492,3 @@ class DuepiEvoDevice(ClimateEntity):
                 str(fan_mode),
             )
         sock.close()
-
