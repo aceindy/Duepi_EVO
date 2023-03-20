@@ -206,7 +206,7 @@ class DuepiEvoDevice(ClimateEntity):
                 sock.send(get_fanspeed.encode())
                 dataFromServer = sock.recv(10).decode()
                 if len(dataFromServer) != 0:
-                    current_exhfanspeed = int(dataFromServer[3:5], 16) * 10
+                    current_exhfanspeed = int(dataFromServer[1:5], 16) * 10
                 else:
                     current_exhfanspeed = none
 
