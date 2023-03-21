@@ -28,13 +28,16 @@ from homeassistant.components.climate.const import (
     SUPPORT_FAN_MODE,
     SUPPORT_TARGET_TEMPERATURE,
 )
+
 from homeassistant.const import (
     ATTR_TEMPERATURE,
     CONF_HOST,
     CONF_NAME,
     CONF_PORT,
     TEMP_CELSIUS,
+    REVOLUTIONS_PER_MINUTE
 )
+
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
 
@@ -90,6 +93,10 @@ get_status      = "\x1bRD90005f&"
 get_temperature = "\x1bRD100057&"
 get_setpoint    = "\x1bRC60005B&"
 get_pelletspeed = "\x1bRD40005A&"
+get_flugastemp  = "\x1bRD000056&" 
+get_fanspeed    = "\x1bREF0006D&" 
+get_errorstate  = "\x1bRDA00067&"
+
 set_temperature = "\x1bRF2xx0yy&"
 set_powerLevel = "\x1bRF00xx0yy&"
 set_powerOff = "\x1bRF000058&"
@@ -121,6 +128,9 @@ class DuepiEvoDevice(ClimateEntity):
         self._target_temperature = None
         self._heating = False
         self._burner_status = None
+        self._flugas_temp = None
+        self._error_code = None
+        self._exhaust_fan_speed = None
         self._hvac_mode = CURRENT_HVAC_OFF
         self._fan_mode = None
         self._fan_modes = ["1", "2", "3", "4", "5"]
@@ -172,6 +182,75 @@ class DuepiEvoDevice(ClimateEntity):
                 else:
                     fan_mode = None
 
+                '''
+                # Get FluGas temperature
+                RD000056& --> Flugas temperature ??
+                            RD000056& 0085002D& ~133 degs
+                '''
+                sock.send(get_flugastemp.encode())
+                dataFromServer = sock.recv(10).decode()
+                if len(dataFromServer) != 0:
+                    current_flugastemp = int(dataFromServer[1:5], 16)
+                else:
+                    current_flugastemp = none
+
+                '''
+                # Get Exhaust Fan speed
+                REF0006D --> fan speed ??
+                            REF0006D& 00AF0047&  ~1750 rpm
+                '''
+                sock.send(get_fanspeed.encode())
+                dataFromServer = sock.recv(10).decode()
+                if len(dataFromServer) != 0:
+                    current_exhfanspeed = int(dataFromServer[1:5], 16) * 10
+                else:
+                    current_exhfanspeed = none
+
+                '''
+                # Get Error code
+                get_errorstate  = "\x1bRDA00067&" 
+                The returned values have the following format:
+                    00xx00yy
+                In the returned value, the xx byte represents the error code.
+                The yy byte seems to be the error value appended with 0x20.
+                '''
+                sock.send(get_errorstate.encode())
+                dataFromServer = sock.recv(10).decode()
+                if len(dataFromServer) != 0:
+                    error_code_decimal = int(dataFromServer[4:6], 16)
+                if error_code_decimal == 0:
+                    error_code = "All OK"
+                elif error_code_decimal == 1:
+                    error_code = "Ignition failure"
+                elif error_code_decimal == 2:
+                    error_code = "Defective suction"
+                elif error_code_decimal == 3:
+                    error_code = "Insufficient air intake"
+                elif error_code_decimal == 4:
+                    error_code = "Water temperature"
+                elif error_code_decimal == 5:
+                    error_code = "Out of pellets"
+                elif error_code_decimal == 6:
+                    error_code =  "Defective pressure switch"
+                elif error_code_decimal == 7:
+                    error_code = "Unknown"
+                elif error_code_decimal == 8:
+                    error_code = "No current"
+                elif error_code_decimal == 9:
+                    error_code = "Exhaust motor failure"
+                elif error_code_decimal == 10:
+                    error_code = "Card surge"
+                elif error_code_decimal == 11:
+                    error_code = "Date expired"
+                elif error_code_decimal == 12:
+                    error_code = "Unknown"
+                elif error_code_decimal == 13:
+                    error_code = "Suction regulating sensor error"
+                elif error_code_decimal == 14:
+                    error_code = "Overheating"
+                else:
+                    error_code = None
+
                 # Get Setpoint temperature
                 sock.send(get_setpoint.encode())
                 dataFromServer = sock.recv(10).decode()
@@ -187,22 +266,28 @@ class DuepiEvoDevice(ClimateEntity):
             return None
 
         if support_setpoint == False:
-            result = [status, current_temperature, fan_mode]
+            result = [status, current_temperature, fan_mode, current_flugastemp, current_exhfanspeed, error_code]
             _LOGGER.debug(
-                "%s: Received burner: %s, Ambient temp: %s, Fan speed: %s",
-                self._name,
-                status,
-                str(current_temperature),
-                str(fan_mode)
-            )
-        else:
-            result = [status, current_temperature, fan_mode, target_temperature]
-            _LOGGER.debug(
-                "%s: Received burner: %s, Ambient temp: %s, Fan speed: %s, Setpoint temp: %s",
+                "%s: Received burner: %s, Ambient temp: %s, Fan speed: %s, Flu gas temp: %s, Exh fan speed: %s, Error code: %s ",
                 self._name,
                 status,
                 str(current_temperature),
                 str(fan_mode),
+                str(current_flugastemp),
+                str(current_exhfanspeed),
+                error_code
+            )
+        else:
+            result = [status, current_temperature, fan_mode, current_flugastemp, current_exhfanspeed, error_code, target_temperature]
+            _LOGGER.debug(
+                "%s: Received burner: %s, Ambient temp: %s, Fan speed: %s, Flu gas temp: %s, Exh fan speed: %s, Error code: %s, Setpoint temp: %s",
+                self._name,
+                status,
+                str(current_temperature),
+                str(fan_mode),
+                str(current_flugastemp),
+                str(current_exhfanspeed),
+                error_code,
                 str(target_temperature)
             )
 
@@ -219,8 +304,11 @@ class DuepiEvoDevice(ClimateEntity):
         self._burner_status = data[0]
         self._current_temperature = data[1]
         self._fan_mode = data[2]
+        self._flugas_temp = data[3]
+        self._exhaust_fan_speed = data[4]
+        self._error_code = data[5]
         if support_setpoint == True:
-            self._target_temperature = data[3]
+            self._target_temperature = data[6]
 
         self._heating = True
         self._hvac_mode = HVAC_MODE_HEAT
@@ -243,8 +331,12 @@ class DuepiEvoDevice(ClimateEntity):
 
     @property
     def extra_state_attributes(self) -> Dict[str, Any]:
-        """Return the current state of the burner."""
-        return {"burner_status": self._burner_status}
+        return {
+            "burner_status": self._burner_status,
+            "Flug_gas_temp": f"{self._flugas_temp} {TEMP_CELSIUS}",
+            "Exh_fan_speed": f"{self._exhaust_fan_speed} {REVOLUTIONS_PER_MINUTE}",
+            "error_code": self._error_code
+        }
 
     @property
     def temperature_unit(self) -> str:
@@ -400,4 +492,3 @@ class DuepiEvoDevice(ClimateEntity):
                 str(fan_mode),
             )
         sock.close()
-
