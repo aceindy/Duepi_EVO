@@ -58,7 +58,7 @@ Confirmed working on:
 - Duroflame Rembrand
 
 ## To do
-Store setpoint and current fan-speed as HA variable, as the stove does not transmit these.
+Add reset option
 
 Huge thanks go to pascal_bornat@hotmail.com
 who found the strings to control the EVO board and interfaced it to Jeedom
