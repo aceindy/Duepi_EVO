@@ -217,7 +217,7 @@ class DuepiEvoDevice(ClimateEntity):
                 sock.send(get_errorstate.encode())
                 dataFromServer = sock.recv(10).decode()
                 if len(dataFromServer) != 0:
-                    error_code_decimal = int(dataFromServer[4:6], 16)
+                    error_code_decimal = int(dataFromServer[2:3], 16)
                 if error_code_decimal == 0:
                     error_code = "All OK"
                 elif error_code_decimal == 1:
