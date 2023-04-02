@@ -81,29 +81,33 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 )
 
 # global constants
-state_ack = 0x00000020
-state_off = 0x00000020
-state_start = 0x01000000
-state_on = 0x02000000
+state_ack   = 0x00000020
+state_eco   = 0x10000000
 state_clean = 0x04000000
-state_cool = 0x08000000
-state_eco = 0x10000000
+state_cool  = 0x08000000
+state_off   = 0x00000020
+state_on    = 0x02000000
+state_start = 0x01000000
 
+get_errorstate  = "\x1bRDA00067&"
+get_exhfanspeed = "\x1bREF0006D&" 
+get_flugastemp  = "\x1bRD000056&" 
+get_pelletspeed = "\x1bRD40005A&"
+get_setpoint    = "\x1bRC60005B&"
 get_status      = "\x1bRD90005f&"
 get_temperature = "\x1bRD100057&"
-get_setpoint    = "\x1bRC60005B&"
-get_pelletspeed = "\x1bRD40005A&"
-get_flugastemp  = "\x1bRD000056&" 
-get_fanspeed    = "\x1bREF0006D&" 
-get_errorstate  = "\x1bRDA00067&"
+get_powerLevel  = "\x1bRD300059&"
 
+remote_reset    = "\x1bRD60005C&"
+
+set_augercor    = "\x1bRD50005A&"
+set_extractcor  = "\x1bRD50005B&"
 set_temperature = "\x1bRF2xx0yy&"
-set_powerLevel = "\x1bRF00xx0yy&"
-set_powerOff = "\x1bRF000058&"
-set_powerOn = "\x1bRF001059&"
-set_pelletcor = "\x1bRD50005B&"
-set_extractcor = "\x1bRD50005B&"
-set_augercor = "\x1bRD50005A&"
+set_pelletcor   = "\x1bRD50005B&"
+set_powerLevel  = "\x1bRF00xx0yy&"
+set_powerOff    = "\x1bRF000058&"
+set_powerOn     = "\x1bRF001059&"
+
 
 # Set to True for stoves that support setpoint retrieval
 support_setpoint = False
@@ -182,11 +186,7 @@ class DuepiEvoDevice(ClimateEntity):
                 else:
                     fan_mode = None
 
-                '''
                 # Get FluGas temperature
-                RD000056& --> Flugas temperature ??
-                            RD000056& 0085002D& ~133 degs
-                '''
                 sock.send(get_flugastemp.encode())
                 dataFromServer = sock.recv(10).decode()
                 if len(dataFromServer) != 0:
@@ -194,30 +194,19 @@ class DuepiEvoDevice(ClimateEntity):
                 else:
                     current_flugastemp = none
 
-                '''
                 # Get Exhaust Fan speed
-                REF0006D --> fan speed ??
-                            REF0006D& 00AF0047&  ~1750 rpm
-                '''
-                sock.send(get_fanspeed.encode())
+                sock.send(get_exhfanspeed.encode())
                 dataFromServer = sock.recv(10).decode()
                 if len(dataFromServer) != 0:
                     current_exhfanspeed = int(dataFromServer[1:5], 16) * 10
                 else:
                     current_exhfanspeed = none
 
-                '''
                 # Get Error code
-                get_errorstate  = "\x1bRDA00067&" 
-                The returned values have the following format:
-                    00xx00yy
-                In the returned value, the xx byte represents the error code.
-                The yy byte seems to be the error value appended with 0x20.
-                '''
                 sock.send(get_errorstate.encode())
                 dataFromServer = sock.recv(10).decode()
                 if len(dataFromServer) != 0:
-                    error_code_decimal = int(dataFromServer[2:3], 16)
+                    error_code_decimal = int(dataFromServer[1:5], 16)
                 if error_code_decimal == 0:
                     error_code = "All OK"
                 elif error_code_decimal == 1:
@@ -268,14 +257,15 @@ class DuepiEvoDevice(ClimateEntity):
         if support_setpoint == False:
             result = [status, current_temperature, fan_mode, current_flugastemp, current_exhfanspeed, error_code]
             _LOGGER.debug(
-                "%s: Received burner: %s, Ambient temp: %s, Fan speed: %s, Flu gas temp: %s, Exh fan speed: %s, Error code: %s ",
+                "%s: Received burner: %s, Ambient temp: %s, Fan speed: %s, Flu gas temp: %s, Exh fan speed: %s, Error code: %s, %s ",
                 self._name,
                 status,
                 str(current_temperature),
                 str(fan_mode),
                 str(current_flugastemp),
                 str(current_exhfanspeed),
-                error_code
+                error_code,
+                error_code_decimal
             )
         else:
             result = [status, current_temperature, fan_mode, current_flugastemp, current_exhfanspeed, error_code, target_temperature]
