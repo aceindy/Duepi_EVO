@@ -257,15 +257,14 @@ class DuepiEvoDevice(ClimateEntity):
         if support_setpoint == False:
             result = [status, current_temperature, fan_mode, current_flugastemp, current_exhfanspeed, error_code]
             _LOGGER.debug(
-                "%s: Received burner: %s, Ambient temp: %s, Fan speed: %s, Flu gas temp: %s, Exh fan speed: %s, Error code: %s, %s ",
+                "%s: Received burner: %s, Ambient temp: %s, Fan speed: %s, Flu gas temp: %s, Exh fan speed: %s, Error code: %s",
                 self._name,
                 status,
                 str(current_temperature),
                 str(fan_mode),
                 str(current_flugastemp),
                 str(current_exhfanspeed),
-                error_code,
-                error_code_decimal
+                error_code
             )
         else:
             result = [status, current_temperature, fan_mode, current_flugastemp, current_exhfanspeed, error_code, target_temperature]
