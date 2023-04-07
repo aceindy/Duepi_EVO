@@ -32,12 +32,18 @@ climate:
     scan_interval: 60
     min_temp: 20
     max_temp: 30
+    auto_reset: True
 ```
 
 Configuration variables:
 
 - **name** (*optional*): The name of your climate entity. Default is `Duepi Evo`
+- **scan_interval** (*required*): The scan interval being used in seconds.
+- **host** (*required*): The IP address used for the serial@tcp devic.
+- **port** (*optional*): The scan interval being used. Default is 23
 - **min/max_temperature** (*optional*): The available setpoint range within HA. Default is 15-30 degs celsius.
+- **auto_reset** (*optional*): Auto reset the stove when "Ignition failed" or "Out of pellets" defaults to False
+
 ## Troubleshooting
 Please set your logging for the custom_component to debug:
 ```yaml
