@@ -266,8 +266,7 @@ class DuepiEvoDevice(ClimateEntity):
         if not (STATE_ACK & current_state):
             _LOGGER.error("%s: Unable to set fan mode to %s", self._name, str(fan_mode))
         sock.close()
-        self._current_fan_mode = self._fan_mode = self._fan_mode_map[fan_mode]
-        #await self.async_update_ha_state(True)
+        self._current_fan_mode = self._fan_mode = fan_mode
 
     async def async_set_temperature(self, **kwargs) -> None:
         # Set target temperature.
@@ -335,7 +334,7 @@ class DuepiEvoDevice(ClimateEntity):
         data = await self.get_data(SUPPORT_SETPOINT)
         self._burner_status = data[0]
         self._current_temperature = data[1]
-        self._current_fan_mode = data[2]
+        self._current_fan_mode = self._fan_mode_map_rev[data[2]]
         self._flugas_temp = data[3]
         self._exhaust_fan_speed = data[4]
         self._pellet_speed = data[5]
@@ -357,8 +356,11 @@ class DuepiEvoDevice(ClimateEntity):
 
         # Perform auto reset when running out of pellets or ignition failure (when enabled)
         if self._auto_reset:
-            if self._error_code == "Out of pellets" or self._error_code == "Ignition failure":
-            await self.remote_reset()
+            if (
+                self._error_code == "Out of pellets"
+                or self._error_code == "Ignition failure"
+            ):
+                await self.remote_reset()
 
     async def get_data(self, support_setpoint) -> None:
         # Get the data from the stove
@@ -471,6 +473,8 @@ class DuepiEvoDevice(ClimateEntity):
                 data_from_server = sock.recv(10).decode()
                 if len(data_from_server) != 0:
                     target_temperature = int(data_from_server[1:5], 16)
+
+                # Validate the returned value
                 if (
                     target_temperature != 0
                     and target_temperature < self._max_temp
