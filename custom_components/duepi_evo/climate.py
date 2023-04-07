@@ -271,9 +271,14 @@ class DuepiEvoDevice(ClimateEntity):
     async def async_set_temperature(self, **kwargs) -> None:
         # Set target temperature.
         target_temperature = kwargs.get(ATTR_TEMPERATURE)
+
         if target_temperature is None:
             _LOGGER.debug("%s: Unable to use target temp", self._name)
             return
+        
+        _LOGGER.debug(
+            "%s: Set target temp to %s°C", self._name, str(target_temperature)
+        )
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(3.0)
@@ -296,9 +301,6 @@ class DuepiEvoDevice(ClimateEntity):
             )
         sock.close()
         self._target_temperature = target_temperature
-        _LOGGER.debug(
-            "%s: Set target temp to %s°C", self._name, str(target_temperature)
-        )
 
     async def async_set_hvac_mode(self, hvac_mode: str) -> None:
         # Set new target hvac mode.
@@ -356,11 +358,10 @@ class DuepiEvoDevice(ClimateEntity):
 
         # Perform auto reset when running out of pellets or ignition failure (when enabled)
         if self._auto_reset:
-            if (
-                self._error_code == "Out of pellets"
-                or self._error_code == "Ignition failure"
-            ):
-                await self.remote_reset()
+            if (self._error_code == "Out of pellets")
+                await self.remote_reset("Out of pellets")
+            elif (self._error_code == "Ignition failure")
+                await self.remote_reset("Ignition failure")
 
     async def get_data(self, support_setpoint) -> None:
         # Get the data from the stove
@@ -521,7 +522,7 @@ class DuepiEvoDevice(ClimateEntity):
         await super().async_added_to_hass()
         self.entity_id = f"climate.{slugify(self._name)}"
 
-    async def remote_reset(self):
+    async def remote_reset(self, error_code):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(3.0)
         sock.connect((self._host, self._port))
@@ -534,4 +535,4 @@ class DuepiEvoDevice(ClimateEntity):
         if not (STATE_ACK & currentstate):
             _LOGGER.error("%s: unknown return value %s", self.name, data_from_server)
         else:
-            _LOGGER.debug("%s: Out of pellets !!", self.name)
+            _LOGGER.debug("%s: %s !!", self.name, error_code)
