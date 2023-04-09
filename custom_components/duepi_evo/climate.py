@@ -152,7 +152,7 @@ class DuepiEvoDevice(ClimateEntity):
         self._error_code_map = {0:"All OK", 1:"Ignition failure", 2:"Defective suction",
             3:"Insufficient air intake", 4:"Water temperature", 5:"Out of pellets",
             6:"Defective pressure switch", 7:"Unknown", 8:"No current",
-            9:"Exhaust motor failure", 10:"Card surge":10, 11:"Date expired",
+            9:"Exhaust motor failure", 10:"Card surge", 11:"Date expired",
             12:"Unknown", 13:"Suction regulating sensor error", 14:"Overheating",
         }
 
@@ -446,7 +446,7 @@ class DuepiEvoDevice(ClimateEntity):
                 data_from_server = sock.recv(10).decode()
                 if len(data_from_server) != 0:
                     error_code_decimal = int(data_from_server[1:5], 16)
-                if error_code_decimal >14
+                if error_code_decimal >14:
                     error_code = None
                 else:
                     error_code = self._error_code_map[error_code_decimal]
