@@ -149,7 +149,12 @@ class DuepiEvoDevice(ClimateEntity):
             value: key for key, value in self._fan_mode_map.items()
         }
         self._pellet_speed = None
-        self._current_fan_mode = self._fan_mode
+        self._error_code_map = {0:"All OK", 1:"Ignition failure", 2:"Defective suction",
+            3:"Insufficient air intake", 4:"Water temperature", 5:"Out of pellets",
+            6:"Defective pressure switch", 7:"Unknown", 8:"No current",
+            9:"Exhaust motor failure", 10:"Card surge", 11:"Date expired",
+            12:"Unknown", 13:"Suction regulating sensor error", 14:"Overheating",
+        }
 
     @property
     def should_poll(self):
@@ -331,6 +336,11 @@ class DuepiEvoDevice(ClimateEntity):
             self._hvac_mode = HVAC_MODE_HEAT
         sock.close()
 
+    async def async_added_to_hass(self) -> None:
+        # Run when entity about to be added.
+        await super().async_added_to_hass()
+        self.entity_id = f"climate.{slugify(self._name)}"
+
     async def async_update(self) -> None:
         # Update local data with data from stove.
         data = await self.get_data(SUPPORT_SETPOINT)
@@ -389,7 +399,7 @@ class DuepiEvoDevice(ClimateEntity):
                 elif STATE_OFF & currentstate:
                     status = "Off"
                 else:
-                    status = "Error"
+                    status = "Unknown State"
 
                 # Get Ambient temperature
                 sock.send(GET_TEMPERATURE.encode())
@@ -436,38 +446,10 @@ class DuepiEvoDevice(ClimateEntity):
                 data_from_server = sock.recv(10).decode()
                 if len(data_from_server) != 0:
                     error_code_decimal = int(data_from_server[1:5], 16)
-                if error_code_decimal == 0:
-                    error_code = "All OK"
-                elif error_code_decimal == 1:
-                    error_code = "Ignition failure"
-                elif error_code_decimal == 2:
-                    error_code = "Defective suction"
-                elif error_code_decimal == 3:
-                    error_code = "Insufficient air intake"
-                elif error_code_decimal == 4:
-                    error_code = "Water temperature"
-                elif error_code_decimal == 5:
-                    error_code = "Out of pellets"
-                elif error_code_decimal == 6:
-                    error_code = "Defective pressure switch"
-                elif error_code_decimal == 7:
-                    error_code = "Unknown"
-                elif error_code_decimal == 8:
-                    error_code = "No current"
-                elif error_code_decimal == 9:
-                    error_code = "Exhaust motor failure"
-                elif error_code_decimal == 10:
-                    error_code = "Card surge"
-                elif error_code_decimal == 11:
-                    error_code = "Date expired"
-                elif error_code_decimal == 12:
-                    error_code = "Unknown"
-                elif error_code_decimal == 13:
-                    error_code = "Suction regulating sensor error"
-                elif error_code_decimal == 14:
-                    error_code = "Overheating"
-                else:
+                if error_code_decimal >14:
                     error_code = None
+                else:
+                    error_code = self._error_code_map[error_code_decimal]
 
                 # Get Setpoint temperature
                 sock.send(GET_SETPOINT.encode())
@@ -484,7 +466,7 @@ class DuepiEvoDevice(ClimateEntity):
                     support_setpoint = True
 
         except asyncio.TimeoutError:
-            _LOGGER.error("Error occurred while polling using host: %s", self._host)
+            _LOGGER.error("Time-out while polling host: %s", self._host)
             sock.close()
             return None
 
@@ -517,11 +499,6 @@ class DuepiEvoDevice(ClimateEntity):
         )
         return result
 
-    async def async_added_to_hass(self) -> None:
-        # Run when entity about to be added.
-        await super().async_added_to_hass()
-        self.entity_id = f"climate.{slugify(self._name)}"
-
     async def remote_reset(self, error_code):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(3.0)
@@ -535,4 +512,4 @@ class DuepiEvoDevice(ClimateEntity):
         if not (STATE_ACK & currentstate):
             _LOGGER.error("%s: unknown return value %s", self.name, data_from_server)
         else:
-            _LOGGER.debug("%s: %s !!", self.name, error_code)
+            _LOGGER.debug("%s: %s was reset !", self.name, error_code)
