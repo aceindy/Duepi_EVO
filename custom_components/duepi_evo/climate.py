@@ -405,10 +405,7 @@ class DuepiEvoDevice(ClimateEntity):
             self._hvac_mode = HVAC_MODE_HEAT
 
         # When enabled, auto reset when running out of pellets or ignition failure.
-        if self._auto_reset and (
-            (self._error_code == "Out of pellets")
-            or (self._error_code == "Ignition failure")
-        ):
+        if self._auto_reset and ((self._error_code == "Out of pellets") or (self._error_code == "Ignition failure")):
             await self.remote_reset(self._error_code)
 
     async def get_data(self, support_setpoint) -> None:
