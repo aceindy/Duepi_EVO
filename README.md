@@ -63,9 +63,6 @@ Confirmed working on:
 - Wamsler Westminster Quatro 6
 - Duroflame Rembrand
 
-## To do
-Add reset option
-
 Huge thanks go to pascal_bornat@hotmail.com
 who found the strings to control the EVO board and interfaced it to Jeedom
 
