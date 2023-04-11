@@ -149,11 +149,22 @@ class DuepiEvoDevice(ClimateEntity):
             value: key for key, value in self._fan_mode_map.items()
         }
         self._pellet_speed = None
-        self._error_code_map = {0:"All OK", 1:"Ignition failure", 2:"Defective suction",
-            3:"Insufficient air intake", 4:"Water temperature", 5:"Out of pellets",
-            6:"Defective pressure switch", 7:"Unknown", 8:"No current",
-            9:"Exhaust motor failure", 10:"Card surge", 11:"Date expired",
-            12:"Unknown", 13:"Suction regulating sensor error", 14:"Overheating",
+        self._error_code_map = {
+            0: "All OK",
+            1: "Ignition failure",
+            2: "Defective suction",
+            3: "Insufficient air intake",
+            4: "Water temperature",
+            5: "Out of pellets",
+            6: "Defective pressure switch",
+            7: "Unknown",
+            8: "No current",
+            9: "Exhaust motor failure",
+            10: "Card surge",
+            11: "Date expired",
+            12: "Unknown",
+            13: "Suction regulating sensor error",
+            14: "Overheating",
         }
 
     @property
@@ -186,11 +197,11 @@ class DuepiEvoDevice(ClimateEntity):
         # Return the temperature we try to reach.
         # Use environment temperature if set to None (bug)
         if self._target_temperature is None:
-            self._target_temperature = int(self._current_temperature) - 1
+            self._target_temperature = int(self._current_temperature)
             _LOGGER.debug(
-                "%s Setpoint retrieval not supported by this stove, using _current_temperature %s -1",
+                "%s Setpoint retrieval not supported by this stove, using _current_temperature %s",
                 self._name,
-                str(self._target_temperature - 1),
+                str(self._target_temperature),
             )
         return self._target_temperature
 
@@ -256,85 +267,112 @@ class DuepiEvoDevice(ClimateEntity):
             _LOGGER.error("%s: Unable to read fan mode [%s]", self._name, fan_mode)
             return
 
-        _LOGGER.debug("%s setting fanSpeed to %s", self.name, fan_mode)
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(3.0)
-        sock.connect((self._host, self._port))
-        code_hex_str = hex(88 + self._fan_mode_map[fan_mode])
-        data_yy = SET_POWERLEVEL.replace("yy", code_hex_str[2:4])
-        power_level_hex_str = hex(self._fan_mode_map[fan_mode])
-        data_xx = data_yy.replace("xx", power_level_hex_str[2:3])
-        sock.send(data_xx.encode())
-        data_from_server = sock.recv(10).decode()
-        data_from_server = data_from_server[1:9]
-        current_state = int(data_from_server, 16)
-        if not (STATE_ACK & current_state):
-            _LOGGER.error("%s: Unable to set fan mode to %s", self._name, str(fan_mode))
-        sock.close()
+        try:
+            with async_timeout.timeout(5):
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(3.0)
+                sock.connect((self._host, self._port))
+                code_hex_str = hex(88 + self._fan_mode_map[fan_mode])
+                data_yy = SET_POWERLEVEL.replace("yy", code_hex_str[2:4])
+                power_level_hex_str = hex(self._fan_mode_map[fan_mode])
+                data_xx = data_yy.replace("xx", power_level_hex_str[2:3])
+                sock.send(data_xx.encode())
+                data_from_server = sock.recv(10).decode()
+                data_from_server = data_from_server[1:9]
+                current_state = int(data_from_server, 16)
+                if not (STATE_ACK & current_state):
+                    _LOGGER.error(
+                        "%s: Unable to set fan mode to %s", self._name, str(fan_mode)
+                    )
+
+        except asyncio.TimeoutError:
+            _LOGGER.error("Time-out while setting fan mode on host: %s", self._host)
+            sock.close()
+
+        finally:
+            sock.close()
+
         self._current_fan_mode = self._fan_mode = fan_mode
+        _LOGGER.debug("%s setting fanSpeed to %s", self.name, fan_mode)
 
     async def async_set_temperature(self, **kwargs) -> None:
         # Set target temperature.
         target_temperature = kwargs.get(ATTR_TEMPERATURE)
-
         if target_temperature is None:
             _LOGGER.debug("%s: Unable to use target temp", self._name)
             return
-        
+
+        try:
+            with async_timeout.timeout(5):
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(3.0)
+                sock.connect((self._host, self._port))
+                set_point_int = int(target_temperature)
+                code_hex_str = hex(set_point_int + 75)
+                set_point_hex_str = hex(set_point_int)
+                data = SET_TEMPERATURE
+                datayy = data.replace("yy", code_hex_str[2:4])
+                dataxy = datayy.replace("xx", set_point_hex_str[2:4])
+                sock.send(dataxy.encode())
+                data_from_server = sock.recv(10).decode()
+                data_from_server = data_from_server[1:9]
+                current_state = int(data_from_server, 16)
+                if not (STATE_ACK & current_state):
+                    _LOGGER.error(
+                        "%s: Unable to set target temp to %s°C",
+                        self._name,
+                        str(target_temperature),
+                    )
+
+        except asyncio.TimeoutError:
+            _LOGGER.error("Time-out while setting temperature on host: %s", self._host)
+            sock.close()
+
+        finally:
+            sock.close()
+
+        self._target_temperature = target_temperature
+
         _LOGGER.debug(
             "%s: Set target temp to %s°C", self._name, str(target_temperature)
         )
 
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(3.0)
-        sock.connect((self._host, self._port))
-        set_point_int = int(target_temperature)
-        code_hex_str = hex(set_point_int + 75)
-        set_point_hex_str = hex(set_point_int)
-        data = SET_TEMPERATURE
-        datayy = data.replace("yy", code_hex_str[2:4])
-        dataxy = datayy.replace("xx", set_point_hex_str[2:4])
-        sock.send(dataxy.encode())
-        data_from_server = sock.recv(10).decode()
-        data_from_server = data_from_server[1:9]
-        current_state = int(data_from_server, 16)
-        if not (STATE_ACK & current_state):
-            _LOGGER.error(
-                "%s: Unable to set target temp to %s°C",
-                self._name,
-                str(target_temperature),
-            )
-        sock.close()
-        self._target_temperature = target_temperature
-
     async def async_set_hvac_mode(self, hvac_mode: str) -> None:
         # Set new target hvac mode.
-        _LOGGER.debug("%s: Set hvac mode to %s", self.name, str(hvac_mode))
+        try:
+            with async_timeout.timeout(5):
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(3.0)
+                sock.connect((self._host, self._port))
+                if hvac_mode == "off":
+                    sock.send(SET_POWEROFF.encode())
+                    data_from_server = sock.recv(10).decode()
+                    data_from_server = data_from_server[1:9]
+                    current_state = int(data_from_server, 16)
+                    if not (STATE_ACK & current_state):
+                        _LOGGER.error(
+                            "%s: unknown return value %s", self.name, data_from_server
+                        )
+                    self._hvac_mode = HVAC_MODE_OFF
+                elif hvac_mode == "heat":
+                    sock.send(SET_POWERON.encode())
+                    data_from_server = sock.recv(10).decode()
+                    data_from_server = data_from_server[1:9]
+                    current_state = int(data_from_server, 16)
+                    if not (STATE_ACK & current_state):
+                        _LOGGER.error(
+                            "%s: unknown return value %s", self.name, data_from_server
+                        )
+                    self._hvac_mode = HVAC_MODE_HEAT
 
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(3.0)
-        sock.connect((self._host, self._port))
-        if hvac_mode == "off":
-            sock.send(SET_POWEROFF.encode())
-            data_from_server = sock.recv(10).decode()
-            data_from_server = data_from_server[1:9]
-            current_state = int(data_from_server, 16)
-            if not (STATE_ACK & current_state):
-                _LOGGER.error(
-                    "%s: unknown return value %s", self.name, data_from_server
-                )
-            self._hvac_mode = HVAC_MODE_OFF
-        elif hvac_mode == "heat":
-            sock.send(SET_POWERON.encode())
-            data_from_server = sock.recv(10).decode()
-            data_from_server = data_from_server[1:9]
-            current_state = int(data_from_server, 16)
-            if not (STATE_ACK & current_state):
-                _LOGGER.error(
-                    "%s: unknown return value %s", self.name, data_from_server
-                )
-            self._hvac_mode = HVAC_MODE_HEAT
-        sock.close()
+        except asyncio.TimeoutError:
+            _LOGGER.error("Time-out while setting hvac mode on host: %s", self._host)
+            sock.close()
+
+        finally:
+            sock.close()
+
+        _LOGGER.debug("%s: Set hvac mode to %s", self.name, str(hvac_mode))
 
     async def async_added_to_hass(self) -> None:
         # Run when entity about to be added.
@@ -366,12 +404,12 @@ class DuepiEvoDevice(ClimateEntity):
             self._heating = True
             self._hvac_mode = HVAC_MODE_HEAT
 
-        # Perform auto reset when running out of pellets or ignition failure (when enabled)
-        if self._auto_reset:
-            if (self._error_code == "Out of pellets"):
-                await self.remote_reset("Out of pellets")
-            elif (self._error_code == "Ignition failure"):
-                await self.remote_reset("Ignition failure")
+        # When enabled, auto reset when running out of pellets or ignition failure.
+        if self._auto_reset and (
+            (self._error_code == "Out of pellets")
+            or (self._error_code == "Ignition failure")
+        ):
+            await self.remote_reset(self._error_code)
 
     async def get_data(self, support_setpoint) -> None:
         # Get the data from the stove
@@ -399,7 +437,7 @@ class DuepiEvoDevice(ClimateEntity):
                 elif STATE_OFF & currentstate:
                     status = "Off"
                 else:
-                    status = "Unknown State"
+                    status = "Unknown state"
 
                 # Get Ambient temperature
                 sock.send(GET_TEMPERATURE.encode())
@@ -446,7 +484,7 @@ class DuepiEvoDevice(ClimateEntity):
                 data_from_server = sock.recv(10).decode()
                 if len(data_from_server) != 0:
                     error_code_decimal = int(data_from_server[1:5], 16)
-                if error_code_decimal >14:
+                if error_code_decimal > 14:
                     error_code = None
                 else:
                     error_code = self._error_code_map[error_code_decimal]
@@ -499,15 +537,28 @@ class DuepiEvoDevice(ClimateEntity):
         )
         return result
 
+    async def async_added_to_hass(self) -> None:
+        # Run when entity about to be added.
+        await super().async_added_to_hass()
+        self.entity_id = f"climate.{slugify(self._name)}"
+
     async def remote_reset(self, error_code):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(3.0)
-        sock.connect((self._host, self._port))
-        sock.send(REMOTE_RESET.encode())
-        data_from_server = sock.recv(10).decode()
-        data_from_server = data_from_server[1:9]
-        currentstate = int(data_from_server, 16)
-        sock.close()
+        try:
+            with async_timeout.timeout(5):
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(3.0)
+                sock.connect((self._host, self._port))
+                sock.send(REMOTE_RESET.encode())
+                data_from_server = sock.recv(10).decode()
+                data_from_server = data_from_server[1:9]
+                currentstate = int(data_from_server, 16)
+        except asyncio.TimeoutError:
+            _LOGGER.error("Time-out while resetting host: %s", self._host)
+            sock.close()
+            return
+
+        finally:
+            sock.close()
 
         if not (STATE_ACK & currentstate):
             _LOGGER.error("%s: unknown return value %s", self.name, data_from_server)
