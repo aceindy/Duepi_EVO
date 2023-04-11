@@ -537,11 +537,6 @@ class DuepiEvoDevice(ClimateEntity):
         )
         return result
 
-    async def async_added_to_hass(self) -> None:
-        # Run when entity about to be added.
-        await super().async_added_to_hass()
-        self.entity_id = f"climate.{slugify(self._name)}"
-
     async def remote_reset(self, error_code):
         try:
             with async_timeout.timeout(5):
