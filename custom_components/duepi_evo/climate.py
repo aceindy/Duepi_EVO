@@ -379,7 +379,7 @@ class DuepiEvoDevice(ClimateEntity):
         await super().async_added_to_hass()
         self.entity_id = f"climate.{slugify(self._name)}"
 
-    async def async_update(self) -> None:
+    async def async_update(self):
         # Update local data with data from stove.
         data = await self.get_data(SUPPORT_SETPOINT)
         self._burner_status = data[0]
@@ -405,7 +405,10 @@ class DuepiEvoDevice(ClimateEntity):
             self._hvac_mode = HVAC_MODE_HEAT
 
         # When enabled, auto reset when running out of pellets or ignition failure.
-        if self._auto_reset and ((self._error_code == "Out of pellets") or (self._error_code == "Ignition failure")):
+        if self._auto_reset and (
+            (self._error_code == "Out of pellets")
+            or (self._error_code == "Ignition failure")
+        ):
             await self.remote_reset(self._error_code)
 
     async def get_data(self, support_setpoint) -> None:
