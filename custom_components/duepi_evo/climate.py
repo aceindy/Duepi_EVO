@@ -264,7 +264,7 @@ class DuepiEvoDevice(ClimateEntity):
             return
 
         try:
-            with async_timeout.timeout(5):
+            async with async_timeout.timeout(5):
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(3.0)
                 sock.connect((self._host, self._port))
@@ -296,7 +296,7 @@ class DuepiEvoDevice(ClimateEntity):
             return
 
         try:
-            with async_timeout.timeout(5):
+            async with async_timeout.timeout(5):
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(3.0)
                 sock.connect((self._host, self._port))
@@ -326,7 +326,7 @@ class DuepiEvoDevice(ClimateEntity):
     async def async_set_hvac_mode(self, hvac_mode) -> None:
         """Set new target hvac mode."""
         try:
-            with async_timeout.timeout(5):
+            async with async_timeout.timeout(5):
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(3.0)
                 sock.connect((self._host, self._port))
@@ -491,7 +491,7 @@ class DuepiEvoDevice(ClimateEntity):
     async def remote_reset(self, error_code) -> None:
         """Resets and power down the stove"""
         try:
-            with async_timeout.timeout(5):
+            async with async_timeout.timeout(5):
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(3.0)
                 sock.connect((self._host, self._port))
