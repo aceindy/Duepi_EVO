@@ -11,7 +11,7 @@ STOVE_PORT = 23
 
 import socket
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_address = (SERVER_IP, SERVERPORT)
+server_address = (SERVER_IP, SERVER_PORT)
 server_socket.bind(server_address)
 server_socket.listen(1)
 print('Waiting for a connection...')
