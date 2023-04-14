@@ -16,7 +16,8 @@ import logging
 import socket
 import voluptuous as vol
 from typing import Any, Dict, List, Optional
-
+from homeassistant.util import slugify
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from homeassistant.components.climate.const import (
     CURRENT_HVAC_HEAT,
@@ -37,10 +38,6 @@ from homeassistant.const import (
     TEMP_CELSIUS,
 )
 
-from homeassistant.util import slugify
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
-import homeassistant.helpers.config_validation as cv
-
 try:
     from homeassistant.components.climate import PLATFORM_SCHEMA, ClimateEntity
 except ImportError:
@@ -48,6 +45,8 @@ except ImportError:
         PLATFORM_SCHEMA,
         ClimateDevice as ClimateEntity,
     )
+
+import homeassistant.helpers.config_validation as cv
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -116,17 +115,17 @@ SET_POWERON = "\x1bRF001059&"
 SUPPORT_SETPOINT = False
 
 
-async def async_setup_platform(hass, config, add_devices, discovery_info=None):
-    # Setup the Duepi EVO.
+async def async_setup_platform(hass, config, add_devices, discovery_info=None) -> None:
+    """Setup the Duepi EVO."""
     session = async_get_clientsession(hass)
     add_devices([DuepiEvoDevice(session, config)], True)
 
 
 class DuepiEvoDevice(ClimateEntity):
-    # Representation of a DuepiEvoDevice.
+    """Representation of a DuepiEvoDevice."""
 
     def __init__(self, session, config) -> None:
-        # Initialize the DuepiEvoDevice.
+        """Initialize the DuepiEvoDevice."""
         self._session = session
         self._name = config.get(CONF_NAME)
         self._host = config.get(CONF_HOST)
@@ -144,6 +143,7 @@ class DuepiEvoDevice(ClimateEntity):
         self._hvac_mode = CURRENT_HVAC_OFF
         self._fan_modes = ["Min", "Low", "Medium", "High", "Max"]
         self._fan_mode = self._fan_modes[2]
+        self._current_fan_mode = None
         self._fan_mode_map = {"Min": 1, "Low": 2, "Medium": 3, "High": 4, "Max": 5}
         self._fan_mode_map_rev = {
             value: key for key, value in self._fan_mode_map.items()
@@ -168,34 +168,34 @@ class DuepiEvoDevice(ClimateEntity):
         }
 
     @property
-    def should_poll(self):
-        # Polling needed for thermostat.
+    def should_poll(self) -> bool:
+        """Polling needed for thermostat."""
         return True
 
     @property
     def supported_features(self) -> int:
-        # Return the list of supported features.
+        """Return the list of supported features."""
         return SUPPORT_FLAGS
 
     @property
-    def target_temperature_step(self):
-        # Indicate the target temperature step for this climate device
+    def target_temperature_step(self) -> float:
+        """Indicate the target temperature step for this climate device"""
         return 1.0
 
     @property
-    def temperature_unit(self):
-        # Indicate the target temperature unit for this climate device
+    def temperature_unit(self) -> str:
+        """Indicate the target temperature unit for this climate device"""
         return TEMP_CELSIUS
 
     @property
     def name(self) -> str:
-        # Return the name of the thermostat.
+        """Return the name of the thermostat."""
         return self._name
 
     @property
     def target_temperature(self) -> Optional[float]:
-        # Return the temperature we try to reach.
-        # Use environment temperature if set to None (bug)
+        """Return the temperature we try to reach.
+        Use environment temperature if set to None (bug)"""
         if self._target_temperature is None:
             self._target_temperature = int(self._current_temperature)
             _LOGGER.debug(
@@ -207,6 +207,7 @@ class DuepiEvoDevice(ClimateEntity):
 
     @property
     def extra_state_attributes(self) -> Dict[str, Any]:
+        """Return additional state attributes to entity"""
         return {
             "burner_status": self._burner_status,
             "error_code": self._error_code,
@@ -218,22 +219,22 @@ class DuepiEvoDevice(ClimateEntity):
 
     @property
     def current_temperature(self) -> Optional[float]:
-        # Return the current temperature.
+        """Return the current temperature."""
         return self._current_temperature
 
     @property
     def hvac_mode(self) -> str:
-        # Return the current operation mode.
+        """Return the current operation mode."""
         return self._hvac_mode
 
     @property
-    def hvac_modes(self) -> List[str]:
-        # Return the list of available hvac operation modes.
+    def hvac_modes(self) -> list[str]:
+        """Return the list of available hvac operation modes."""
         return SUPPORT_MODES
 
     @property
     def hvac_action(self) -> Optional[str]:
-        # Return the current running hvac operation.
+        """Return the current running hvac operation."""
         if self._burner_status in ["Eco Idle"]:
             return CURRENT_HVAC_IDLE
         elif self._heating:
@@ -243,26 +244,27 @@ class DuepiEvoDevice(ClimateEntity):
 
     @property
     def min_temp(self) -> float:
-        # Return the minimum temperature.
+        """Return the minimum temperature."""
         return self._min_temp
 
     @property
     def max_temp(self) -> float:
-        # Return the maximum temperature.
+        """Return the maximum temperature."""
         return self._max_temp
 
     @property
-    def fan_mode(self):
-        # Return the fan setting.
+    def fan_mode(self) -> str:
+        """Return the fan setting."""
         self._fan_mode = self._current_fan_mode
         return self._fan_mode
 
     @property
-    def fan_modes(self):
-        # Return the list of available fan modes.
+    def fan_modes(self) -> list[str]:
+        """Return the list of available fan modes."""
         return self._fan_modes
 
     async def async_set_fan_mode(self, fan_mode: str) -> None:
+        """Set the fan mode"""
         if fan_mode == "":
             _LOGGER.error("%s: Unable to read fan mode [%s]", self._name, fan_mode)
             return
@@ -295,8 +297,8 @@ class DuepiEvoDevice(ClimateEntity):
         self._current_fan_mode = self._fan_mode = fan_mode
         _LOGGER.debug("%s setting fanSpeed to %s", self.name, fan_mode)
 
-    async def async_set_temperature(self, **kwargs) -> None:
-        # Set target temperature.
+    async def async_set_temperature(self, **kwargs: Any) -> None:
+        """Set target temperature."""
         target_temperature = kwargs.get(ATTR_TEMPERATURE)
         if target_temperature is None:
             _LOGGER.debug("%s: Unable to use target temp", self._name)
@@ -337,8 +339,8 @@ class DuepiEvoDevice(ClimateEntity):
             "%s: Set target temp to %s°C", self._name, str(target_temperature)
         )
 
-    async def async_set_hvac_mode(self, hvac_mode: str) -> None:
-        # Set new target hvac mode.
+    async def async_set_hvac_mode(self, hvac_mode) -> None:
+        """Set new target hvac mode."""
         try:
             with async_timeout.timeout(5):
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -375,12 +377,12 @@ class DuepiEvoDevice(ClimateEntity):
         _LOGGER.debug("%s: Set hvac mode to %s", self.name, str(hvac_mode))
 
     async def async_added_to_hass(self) -> None:
-        # Run when entity about to be added.
+        """Run when entity about to be added."""
         await super().async_added_to_hass()
         self.entity_id = f"climate.{slugify(self._name)}"
 
-    async def async_update(self):
-        # Update local data with data from stove.
+    async def async_update(self) -> None:
+        """Update local data with data from stove."""
         data = await self.get_data(SUPPORT_SETPOINT)
         self._burner_status = data[0]
         self._current_temperature = data[1]
@@ -405,16 +407,16 @@ class DuepiEvoDevice(ClimateEntity):
             self._hvac_mode = HVAC_MODE_HEAT
 
         # When enabled, auto reset when running out of pellets or ignition failure.
-        if self._auto_reset and (
-            (self._error_code == "Out of pellets")
-            or (self._error_code == "Ignition failure")
+        if self._auto_reset and self._error_code in (
+            "Out of pellets",
+            "Ignition failure",
         ):
             await self.remote_reset(self._error_code)
 
     async def get_data(self, support_setpoint) -> None:
-        # Get the data from the stove
+        """Get the data from the stove"""
         try:
-            with async_timeout.timeout(5):
+            async with async_timeout.timeout(5):
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(3.0)
                 sock.connect((self._host, self._port))
@@ -444,8 +446,6 @@ class DuepiEvoDevice(ClimateEntity):
                 data_from_server = sock.recv(10).decode()
                 if len(data_from_server) != 0:
                     current_temperature = int(data_from_server[1:5], 16) / 10.0
-                else:
-                    current_temperature = 21.0
 
                 # Get Fan mode (also called fan speed or power level)
                 sock.send(GET_POWERLEVEL.encode())
@@ -498,8 +498,7 @@ class DuepiEvoDevice(ClimateEntity):
                 # Validate the returned value
                 if (
                     target_temperature != 0
-                    and target_temperature < self._max_temp
-                    and target_temperature > self._min_temp
+                    and self._min_temp < target_temperature < self._max_temp
                 ):
                     support_setpoint = True
 
@@ -537,7 +536,8 @@ class DuepiEvoDevice(ClimateEntity):
         )
         return result
 
-    async def remote_reset(self, error_code):
+    async def remote_reset(self, error_code) -> None:
+        """Resets and power down the stove"""
         try:
             with async_timeout.timeout(5):
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
