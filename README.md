@@ -72,8 +72,8 @@ Confirmed working on:
 - Wamsler Westminster Quatro 6
 - Duroflame Rembrand
 
-Huge thanks go to pascal_bornat@hotmail.com
-who found the strings to control the EVO board and interfaced it to Jeedom
+Big thanks go to Pascal Bornat (who initially started reverse engineering for Jeedom)
+and Oxan van Leeuwen (for the Stream server for ESPHomeproject)
 
 [Buy Me A Coffee](https://ko-fi.com/aceindy)! :coffee:
 
