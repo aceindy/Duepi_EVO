@@ -452,15 +452,13 @@ class DuepiEvoDevice(ClimateEntity):
                     error_code_decimal = int(data_from_server[1:5], 16)
                 error_code = (self._error_code_map[error_code_decimal] if error_code_decimal < 15 else str(error_code_decimal))
 
-                # Get Setpoint temperature
+                # Get & validate target temperature (Setpoint)
                 sock.send(GET_SETPOINT.encode())
                 data_from_server = sock.recv(10).decode()
                 if len(data_from_server) != 0:
                     target_temperature = int(data_from_server[1:5], 16)
-
-                # Validate the returned value
-                if (target_temperature != 0 and self._min_temp < target_temperature < self._max_temp):
-                    support_setpoint = True
+                    if (target_temperature != 0 and self._min_temp < target_temperature < self._max_temp):
+                        support_setpoint = True
 
         except asyncio.TimeoutError:
             _LOGGER.error("Time-out while polling host: %s", self._host)
