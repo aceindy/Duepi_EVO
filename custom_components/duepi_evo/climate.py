@@ -450,7 +450,7 @@ class DuepiEvoDevice(ClimateEntity):
                 data_from_server = sock.recv(10).decode()
                 if len(data_from_server) != 0:
                     error_code_decimal = int(data_from_server[1:5], 16)
-                error_code = (self._error_code_map[error_code_decimal] if error_code_decimal < 15 else None)
+                error_code = (self._error_code_map[error_code_decimal] if error_code_decimal < 15 else str(error_code_decimal))
 
                 # Get Setpoint temperature
                 sock.send(GET_SETPOINT.encode())
