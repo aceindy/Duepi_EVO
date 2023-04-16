@@ -1,5 +1,5 @@
 substitutions:
-  node_name: duepi-pelletstove # Use a unique name.
+  node_name: duepi-pelletstove1 # Use a unique name.
   node_id: duepi1    # Use a unique id.
   friendly_node_name: "Duepi Pelletstove"
 
