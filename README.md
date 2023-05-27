@@ -71,6 +71,7 @@ Confirmed working on:
 - Interstove
 - Wamsler Westminster Quatro 6
 - Duroflame Rembrand
+- Amesti 8100 plus2
 
 Big thanks go to Pascal Bornat (who initially started reverse engineering for Jeedom)
 and Oxan van Leeuwen (for the Stream server for ESPHomeproject)
