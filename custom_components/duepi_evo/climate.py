@@ -9,6 +9,7 @@ climate:
         port: 23
         scan_interval: 10
         auto_reset: True
+        temp_nofeedback: 16
 """
 import asyncio
 import async_timeout
@@ -66,10 +67,12 @@ DEFAULT_HOST = ""
 DEFAULT_PORT = 23
 DEFAULT_MIN_TEMP = 16.0
 DEFAULT_MAX_TEMP = 30.0
+DEFAULT_NOFEEDBACK = 16.0
 DEFAULT_AUTO_RESET = False
 CONF_MIN_TEMP = "min_temp"
 CONF_MAX_TEMP = "max_temp"
 CONF_AUTO_RESET = "auto_reset"
+CONF_NOFEEDBACK = "temp_nofeedback"
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -79,6 +82,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_MIN_TEMP, default=DEFAULT_MIN_TEMP): config_validation.positive_float,
         vol.Optional(CONF_MAX_TEMP, default=DEFAULT_MAX_TEMP): config_validation.positive_float,
         vol.Optional(CONF_AUTO_RESET, default=DEFAULT_AUTO_RESET): config_validation.boolean,
+        vol.Optional(CONF_NOFEEDBACK, default=DEFAULT_NOFEEDBACK): config_validation.positive_float,
     }
 )
 
@@ -133,6 +137,7 @@ class DuepiEvoDevice(ClimateEntity):
         self._min_temp = config.get(CONF_MIN_TEMP)
         self._max_temp = config.get(CONF_MAX_TEMP)
         self._auto_reset = config.get(CONF_AUTO_RESET)
+        self._no_feedback = config.get(CONF_NOFEEDBACK)
         self._current_temperature = None
         self._target_temperature = None
         self._heating = False
@@ -195,8 +200,8 @@ class DuepiEvoDevice(ClimateEntity):
         """Return the temperature we try to reach.
         Use environment temperature if set to None (bug)"""
         if self._target_temperature is None:
-            self._target_temperature = int(self._current_temperature)
-            _LOGGER.debug("%s Setpoint retrieval not supported by this stove, using _current_temperature %s", self._name, str(self._target_temperature))
+            self._target_temperature = int(self._no_feedback)
+            _LOGGER.debug("%s Setpoint retrieval not supported by this stove, using temp_nofeedback %s", self._name, str(self._no_feedback))
         return self._target_temperature
 
     @property
