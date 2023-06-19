@@ -201,7 +201,7 @@ class DuepiEvoDevice(ClimateEntity):
         Use environment temperature if set to None (bug)"""
         if self._target_temperature is None:
             self._target_temperature = int(self._no_feedback)
-            _LOGGER.debug("%s Setpoint retrieval not supported by this stove, using temp_nofeedback %s", self._name, str(self._no_feedback))
+            _LOGGER.debug("%s Setpoint retrieval not supported by this stove, using temp_nofeedback %s", self._name, str(self._target_temperature))
         return self._target_temperature
 
     @property
