@@ -6,6 +6,7 @@ climate:
     - platform: duepi_evo
         name: Duepi Evo
         host: <IP_ADDRESS>
+        unique_id: <unique_name>
         port: 23
         scan_interval: 10
         auto_reset: True
@@ -69,10 +70,12 @@ DEFAULT_MIN_TEMP = 16.0
 DEFAULT_MAX_TEMP = 30.0
 DEFAULT_NOFEEDBACK = 16.0
 DEFAULT_AUTO_RESET = False
+DEFAULT_UNIQUE_ID = "duepi_unique"
 CONF_MIN_TEMP = "min_temp"
 CONF_MAX_TEMP = "max_temp"
 CONF_AUTO_RESET = "auto_reset"
 CONF_NOFEEDBACK = "temp_nofeedback"
+CONF_UNIQUE_ID = "unique_id"
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -83,6 +86,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_MAX_TEMP, default=DEFAULT_MAX_TEMP): config_validation.positive_float,
         vol.Optional(CONF_AUTO_RESET, default=DEFAULT_AUTO_RESET): config_validation.boolean,
         vol.Optional(CONF_NOFEEDBACK, default=DEFAULT_NOFEEDBACK): config_validation.positive_float,
+        vol.Optional(CONF_UNIQUE_ID, default=DEFAULT_UNIQUE_ID): config_validation.string,
     }
 )
 
@@ -138,6 +142,7 @@ class DuepiEvoDevice(ClimateEntity):
         self._max_temp = config.get(CONF_MAX_TEMP)
         self._auto_reset = config.get(CONF_AUTO_RESET)
         self._no_feedback = config.get(CONF_NOFEEDBACK)
+        self._unique_id = config.get(CONF_UNIQUE_ID)
         self._current_temperature = None
         self._target_temperature = None
         self._heating = False
@@ -169,6 +174,11 @@ class DuepiEvoDevice(ClimateEntity):
             13: "Suction regulating sensor error",
             14: "Overheating",
         }
+
+    @property
+    def unique_id(self):
+        """Return a unique ID."""
+        return self._unique_id
 
     @property
     def should_poll(self) -> bool:
