@@ -35,7 +35,7 @@ Add the following to your `configuration.yaml` file:
 # Example configuration.yaml entry
 climate:
   - platform: duepi_evo
-    name: <your heaters name here
+    name: <your heaters name here>
     host: 192.168.1.123
     port: 23
     scan_interval: 60
@@ -48,14 +48,14 @@ climate:
 
 Configuration variables:
 
-- **name** (*optional*): The name of your climate entity. Default is `Duepi Evo`
-- **host** (*required*): The IP address used for the serial@tcp devic.
-- **port** (*optional*): The scan interval being used. Default is 23
+- **name** (*optional*): The name of your climate entity. Defaults to "Duepi Evo".
+- **host** (*required*): The IP address used for the serial@tcp device.
+- **port** (*optional*): The scan interval being used. Defaults to 23.
 - **scan_interval** (*required*): The scan interval being used in seconds.
 - **min/max_temperature** (*optional*): The available setpoint range within HA. Default is 16-30 degs celsius.
 - **auto_reset** (*optional*): Auto reset the stove when "Ignition failed" or "Out of pellets" defaults to False.
-- **unique_id** (*optional*): A unique name for the device. Defaults to "duepi_unique"
-- **temp_nofeedback** (*optional*): The default setpoint temperature for stoves that do not store the current setpoint. Default is 16.
+- **unique_id** (*optional*): A unique name for the device. Defaults to "duepi_unique".
+- **temp_nofeedback** (*optional*): The default setpoint temperature for stoves that do not store the current setpoint. Defauls to 16.
 
 ## Troubleshooting
 Please set your logging for the custom_component to debug:
