@@ -5,6 +5,8 @@ The `Duepi EVO` climate platform is a reverse engineered implementation of the a
 With this module it is possible to control your pellet stove with HomeAssistant.
 This is in no way associated with the company Duepi and comes with no guarantees or warranty. Use at your own risk.
 
+![image](https://github.com/aceindy/Duepi_EVO/assets/94692/5f2bd263-4e17-418d-a467-09fda2802d0e)
+
 ## Prerequisites
 ### Hardware
 This uses an ESP01 board with 5/3.3v adapter.
