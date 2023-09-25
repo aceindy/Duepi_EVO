@@ -9,11 +9,9 @@ This is in no way associated with the company Duepi and comes with no guarantees
 
 ## Prerequisites
 ### Hardware
-This uses an ESP01 board with 5/3.3v adapter.
+This uses an ESP01 board with 5/3.3v adapter with ser2net software.
 
-We use the ESP module with a ser2net software.
-
-I recently found a config for ESPHome (which has my preference.
+I recently found a config for ESPHome (which has my preference, but I switched back, as it wasn't very stable.
 You will find a configureation example here https://github.com/aceindy/Duepi_EVO/blob/main/ESPHome/duepi-pelletstove.yaml
 
 
