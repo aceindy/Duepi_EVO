@@ -66,17 +66,17 @@ logger:
     custom_components.duepi_evo: debug
 ```
 Confirmed working on:
-- Qlima Viola 85 S-Line
-- Kalor
-- Artel
-- Foco
-- Centrometal
-- AMG
-- Interstove
-- Wamsler Westminster Quatro 6
-- Duroflame Rembrand
-- Duroflame Carré
 - Amesti 8100 plus2
+- AMG
+- Artel
+- Centrometal
+- Duroflame Carré
+- Duroflame Rembrand
+- Foco
+- Interstove
+- Kalor
+- Qlima Viola 85 S-Line
+- Wamsler Westminster Quatro 6
 
 Big thanks go to Pascal Bornat (who initially started reverse engineering for Jeedom)
 and Oxan van Leeuwen (for the Stream server for ESPHomeproject)
