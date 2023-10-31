@@ -75,6 +75,7 @@ Confirmed working on:
 - Interstove
 - Wamsler Westminster Quatro 6
 - Duroflame Rembrand
+- Duroflame Carré
 - Amesti 8100 plus2
 
 Big thanks go to Pascal Bornat (who initially started reverse engineering for Jeedom)
