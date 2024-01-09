@@ -74,6 +74,7 @@ Confirmed working on:
 - Duroflame Rembrand
 - Foco
 - Interstove
+- Julia Next
 - Kalor
 - Qlima Viola 85 S-Line
 - Wamsler Westminster Quatro 6
