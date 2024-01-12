@@ -65,36 +65,34 @@ logger:
   logs:
     custom_components.duepi_evo: debug
 ```
-## Example lovelace card:
+## Example lovelace entities card:
 ```yaml
-type: vertical-stack
-cards:
-  - type: entities
-    entities:
-      - entity: climate.pellet_stove
-        type: attribute
-        name: Burner Status
-        attribute: burner_status
-      - entity: climate.pellet_stove
-        type: attribute
-        name: Error code
-        attribute: error_code
-      - entity: climate.pellet_stove
-        type: attribute
-        name: Exhaust fan speed
-        attribute: exh_fan_speed
-      - entity: climate.pellet_stove
-        type: attribute
-        name: Flu gas temperature
-        attribute: flu_gas_temp
-      - entity: climate.pellet_stove
-        type: attribute
-        name: Pellet speed
-        attribute: pellet_speed
-      - entity: climate.pellet_stove
-        type: attribute
-        name: Power level
-        attribute: power_level
+type: entities
+entities:
+  - entity: climate.pellet_stove
+    type: attribute
+    name: Burner Status
+    attribute: burner_status
+  - entity: climate.pellet_stove
+    type: attribute
+    name: Error code
+    attribute: error_code
+  - entity: climate.pellet_stove
+    type: attribute
+    name: Exhaust fan speed
+    attribute: exh_fan_speed
+  - entity: climate.pellet_stove
+    type: attribute
+    name: Flu gas temperature
+    attribute: flu_gas_temp
+  - entity: climate.pellet_stove
+    type: attribute
+    name: Pellet speed
+    attribute: pellet_speed
+  - entity: climate.pellet_stove
+    type: attribute
+    name: Power level
+    attribute: power_level
 ```
 
 Confirmed working on:
