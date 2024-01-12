@@ -65,6 +65,38 @@ logger:
   logs:
     custom_components.duepi_evo: debug
 ```
+## Example lovelace card:
+```yaml
+type: vertical-stack
+cards:
+  - type: entities
+    entities:
+      - entity: climate.pellet_stove
+        type: attribute
+        name: Burner Status
+        attribute: burner_status
+      - entity: climate.pellet_stove
+        type: attribute
+        name: Error code
+        attribute: error_code
+      - entity: climate.pellet_stove
+        type: attribute
+        name: Exhaust fan speed
+        attribute: exh_fan_speed
+      - entity: climate.pellet_stove
+        type: attribute
+        name: Flu gas temperature
+        attribute: flu_gas_temp
+      - entity: climate.pellet_stove
+        type: attribute
+        name: Pellet speed
+        attribute: pellet_speed
+      - entity: climate.pellet_stove
+        type: attribute
+        name: Power level
+        attribute: power_level
+```
+
 Confirmed working on:
 - Amesti 8100 plus2
 - AMG
@@ -83,4 +115,3 @@ Big thanks go to Pascal Bornat (who initially started reverse engineering for Je
 and Oxan van Leeuwen (for the Stream server for ESPHomeproject)
 
 [Buy Me A Coffee](https://ko-fi.com/aceindy)! :coffee:
-
