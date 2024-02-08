@@ -15,10 +15,11 @@ I recently found a config for ESPHome (which has my preference, but I switched b
 You will find a configureation example here https://github.com/aceindy/Duepi_EVO/blob/main/ESPHome/duepi-pelletstove.yaml
 
 
-####But also ESPLink will work:
+####ESPLink works for sure:
 You must have the ESP01 Module installed and flash it with https://github.com/jeelabs/esp-link.
 Baudrate 115200, 8N1.
 Pin layout is mentioned in the pdf (pcb, J8)
+Way easier is to install it with my connect over serial page: https://aceindy.github.io/Duepi_EVO/
 
 #### As well as Espeasy (info from a Duroflame Rembrand user):
 Optionally one can use the Wemos D1 flashed with espeasy (https://www.letscontrolit.com/wiki/index.php/ESPEasy). This device has a 5V input and integrated CH340 for easy flashing. The only tweak needed was to add 5ms timeout delay in the serial device settings of espeasy to get robust data from the pellet stove. In Esp_easy flashed device select the Device: Communication - Serial Server (https://www.letscontrolit.com/wiki/index.php?title=Ser2Net) and fill in the appropiate fields (harware serial GPIO-3 and -1, port 1234 (or any) baud rate 115200, serial config 8N1,RX receive 5ms, 256 buffer). 
