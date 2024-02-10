@@ -15,10 +15,11 @@ I recently found a config for ESPHome (which has my preference, but I switched b
 You will find a configureation example here https://github.com/aceindy/Duepi_EVO/blob/main/ESPHome/duepi-pelletstove.yaml
 
 
-####ESPLink works for sure:
+### ESPLink works for sure:
 You must have the ESP01 Module installed and flash it with https://github.com/jeelabs/esp-link.
 Baudrate 115200, 8N1.
 Pin layout is mentioned in the pdf (pcb, J8)
+
 Way easier is to install it with my connect over serial page: https://aceindy.github.io/Duepi_EVO/
 
 #### As well as Espeasy (info from a Duroflame Rembrand user):
