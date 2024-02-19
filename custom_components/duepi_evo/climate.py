@@ -5,7 +5,7 @@ configuration.yaml
 climate:
     - platform: duepi_evo
         name: Duepi Evo
-       host: <IP_ADDRESS>
+        host: <IP_ADDRESS>
         unique_id: <unique_name>
         port: 23
         scan_interval: 10
