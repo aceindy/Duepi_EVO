@@ -105,6 +105,7 @@ Confirmed working on:
 - Artel
 - Centrometal
 - Duroflame Carré
+- Duroflame Pelle
 - Duroflame Rembrand
 - Foco
 - Interstove
