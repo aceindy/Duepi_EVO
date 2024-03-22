@@ -53,11 +53,11 @@ Configuration variables:
 
 - **name** (*optional*): The name of your climate entity. Defaults to "Duepi Evo".
 - **host** (*required*): The IP address used for the serial@tcp device.
-- **port** (*optional*): The scan interval being used. Defaults to 2000. (when using my ESPLink version, you can also use the default telnet port 23)
+- **port** (*optional*): The port being used. Defaults to 2000. (when using my ESPLink version, you can also use the default telnet port 23)
 - **scan_interval** (*required*): The scan interval being used in seconds.
 - **min/max_temperature** (*optional*): The available setpoint range within HA. Default is 16-30 degs celsius.
 - **auto_reset** (*optional*): Auto reset the stove when "Ignition failed" or "Out of pellets" defaults to False.
-- **unique_id** (*optional*): A unique name for the device. Defaults to "duepi_unique".
+- **unique_id** (*optional*): A unique name for the device. Defaults to "duepi_unique". Change when using multiple stoves
 - **temp_nofeedback** (*optional*): The default setpoint temperature for stoves that do not store the current setpoint. Defauls to 16.
 
 ## Troubleshooting
