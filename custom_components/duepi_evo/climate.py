@@ -12,6 +12,7 @@ climate:
         auto_reset: True
        temp_nofeedback: 16
 """
+
 import asyncio
 import logging
 import socket
@@ -20,6 +21,7 @@ from typing import Any
 import voluptuous as vol
 
 from homeassistant.components.climate import (
+    PLATFORM_SCHEMA as CLIMATE_PLATFORM_SCHEMA,
     ClimateEntity,
     ClimateEntityFeature,
     HVACAction,
@@ -36,14 +38,9 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.typing import ConfigType
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util import slugify
-
-try:
-    from homeassistant.components.climate import PLATFORM_SCHEMA
-except ImportError:
-    from homeassistant.components.climate import PLATFORM_SCHEMA
-
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -73,7 +70,7 @@ CONF_AUTO_RESET = "auto_reset"
 CONF_NOFEEDBACK = "temp_nofeedback"
 CONF_UNIQUE_ID = "unique_id"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+PLATFORM_SCHEMA = CLIMATE_PLATFORM_SCHEMA.extend(
     {
         vol.Required(CONF_HOST, default=DEFAULT_HOST): cv.string,
         vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.positive_int,
@@ -87,43 +84,41 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 )
 
 # constants
-STATE_ACK    = 0x00000020
-STATE_ECO    = 0x10000000
-STATE_CLEAN  = 0x04000000
-STATE_COOL   = 0x08000000
-STATE_OFF    = 0x00000020
-STATE_ON     = 0x02000000
-STATE_START  = 0x01000000
+STATE_ACK = 0x00000020
+STATE_ECO = 0x10000000
+STATE_CLEAN = 0x04000000
+STATE_COOL = 0x08000000
+STATE_OFF = 0x00000020
+STATE_ON = 0x02000000
+STATE_START = 0x01000000
 
-GET_ERRORSTATE   = "\x1bRDA00067&"
-GET_EXHFANSPEED  = "\x1bREF0006D&"
-GET_FLUGASTEMP   = "\x1bRD000056&"
-GET_PELLETSPEED  = "\x1bRD40005A&"
-GET_SETPOINT     = "\x1bRC60005B&"
-GET_STATUS       = "\x1bRD90005f&"
-GET_TEMPERATURE  = "\x1bRD100057&"
-GET_POWERLEVEL   = "\x1bRD300059&"
+GET_ERRORSTATE = "\x1bRDA00067&"
+GET_EXHFANSPEED = "\x1bREF0006D&"
+GET_FLUGASTEMP = "\x1bRD000056&"
+GET_PELLETSPEED = "\x1bRD40005A&"
+GET_SETPOINT = "\x1bRC60005B&"
+GET_STATUS = "\x1bRD90005f&"
+GET_TEMPERATURE = "\x1bRD100057&"
+GET_POWERLEVEL = "\x1bRD300059&"
 
-REMOTE_RESET     = "\x1bRD60005C&"
+REMOTE_RESET = "\x1bRD60005C&"
 
-SET_AUGERCOR     = "\x1bRD50005A&"
+SET_AUGERCOR = "\x1bRD50005A&"
 SET_EXTRACTORCOR = "\x1bRD50005B&"
-SET_TEMPERATURE  = "\x1bRF2xx0yy&"
-SET_PELLETCOR    = "\x1bRD50005B&"
-SET_POWERLEVEL   = "\x1bRF00xx0yy&"
-SET_POWEROFF     = "\x1bRF000058&"
-SET_POWERON      = "\x1bRF001059&"
-
+SET_TEMPERATURE = "\x1bRF2xx0yy&"
+SET_PELLETCOR = "\x1bRD50005B&"
+SET_POWERLEVEL = "\x1bRF00xx0yy&"
+SET_POWEROFF = "\x1bRF000058&"
+SET_POWERON = "\x1bRF001059&"
 
 # Set to True for stoves that support setpoint retrieval
 SUPPORT_SETPOINT = False
 
-
 async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
-    add_devices,
-    discovery_info=None,
+    add_devices: AddEntitiesCallback,
+    discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
     """Set up the Duepi EVO."""
     session = async_get_clientsession(hass)
@@ -250,12 +245,13 @@ class DuepiEvoDevice(ClimateEntity):
     @property
     def hvac_action(self) -> HVACAction:
         """Return the current running hvac operation."""
-        if self._burner_status in ["Eco Idle"]:
-            return HVACAction.IDLE
-        elif self._heating:
-            return HVACAction.HEATING
-        else:
-            return HVACAction.OFF
+        return (
+            HVACAction.IDLE
+            if self._burner_status in ["Eco Idle"]
+            else HVACAction.HEATING
+            if self._heating
+            else HVACAction.OFF
+        )
 
     @property
     def min_temp(self) -> float:
@@ -412,7 +408,7 @@ class DuepiEvoDevice(ClimateEntity):
             self._hvac_mode = HVACMode.OFF
         elif self._burner_status in ["Cooling down"]:
             self._heating = True
-            self._hvac_mode = HVACMode.OFF
+            self._hvac_mode = HVACMode.OFFF
         else:
             self._heating = True
             self._hvac_mode = HVACMode.HEAT
