@@ -20,10 +20,12 @@ You must have the ESP01 Module installed and flash it with https://github.com/je
 Baudrate 115200, 8N1.
 Pin layout is mentioned in the pdf (pcb, J8)
 
-Way easier is to install it with my connect over serial page here: https://aceindy.github.io/Duepi_EVO/index.html
+Easiest way to install ESP-Link is to use this page from my GitHub site [ESP-Link](https://aceindy.github.io/esp-link/)
+Note that I have re-compiled the firmware to host on ports 23 and 2000, which allows to use the newer myDPRemote app too (as it has port 2000 hardcoded).
+In order to install the newer firmware, first install the firmware normally, then use the upgrade page on the web interface to install [user2.bin](https://github.com/aceindy/esp-link/blob/master/user2.bin) (use the raw download button on the right)
 
 #### As well as Espeasy (info from a Duroflame Rembrand user):
-Optionally one can use the Wemos D1 flashed with espeasy (https://www.letscontrolit.com/wiki/index.php/ESPEasy). This device has a 5V input and integrated CH340 for easy flashing. The only tweak needed was to add 5ms timeout delay in the serial device settings of espeasy to get robust data from the pellet stove. In Esp_easy flashed device select the Device: Communication - Serial Server (https://www.letscontrolit.com/wiki/index.php?title=Ser2Net) and fill in the appropiate fields (harware serial GPIO-3 and -1, port 1234 (or any) baud rate 115200, serial config 8N1,RX receive 5ms, 256 buffer). 
+Optionally one can use the Wemos D1 flashed with [ESPeasy](https://www.letscontrolit.com/wiki/index.php/ESPEasy). This device has a 5V input and integrated CH340 for easy flashing. The only tweak needed was to add 5ms timeout delay in the serial device settings of espeasy to get robust data from the pellet stove. In Esp_easy flashed device select the Device: Communication - [Serial Server](https://www.letscontrolit.com/wiki/index.php?title=Ser2Net) and fill in the appropiate fields (harware serial GPIO-3 and -1, port 1234 (or any) baud rate 115200, serial config 8N1,RX receive 5ms, 256 buffer). 
 
 ## Functionality
 - Control target temperature.
@@ -39,7 +41,7 @@ climate:
   - platform: duepi_evo
     name: <your heaters name here>
     host: 192.168.1.123
-    port: 23
+    port: 2000
     scan_interval: 60
     min_temp: 20
     max_temp: 30
@@ -47,16 +49,15 @@ climate:
     unique_id: <unique_name>
     temp_nofeedback: 16
 ```
-
 Configuration variables:
 
 - **name** (*optional*): The name of your climate entity. Defaults to "Duepi Evo".
 - **host** (*required*): The IP address used for the serial@tcp device.
-- **port** (*optional*): The scan interval being used. Defaults to 23.
+- **port** (*optional*): The port being used. Defaults to 2000. (when using my ESPLink version, you can also use the default telnet port 23)
 - **scan_interval** (*required*): The scan interval being used in seconds.
 - **min/max_temperature** (*optional*): The available setpoint range within HA. Default is 16-30 degs celsius.
 - **auto_reset** (*optional*): Auto reset the stove when "Ignition failed" or "Out of pellets" defaults to False.
-- **unique_id** (*optional*): A unique name for the device. Defaults to "duepi_unique".
+- **unique_id** (*optional*): A unique name for the device. Defaults to "duepi_unique". Change when using multiple stoves
 - **temp_nofeedback** (*optional*): The default setpoint temperature for stoves that do not store the current setpoint. Defauls to 16.
 
 ## Troubleshooting
@@ -103,6 +104,7 @@ Confirmed working on:
 - Artel
 - Centrometal
 - Duroflame Carré
+- Duroflame Pelle
 - Duroflame Rembrand
 - Foco
 - Interstove

@@ -44,7 +44,7 @@ from homeassistant.util import slugify
 
 _LOGGER = logging.getLogger(__name__)
 
-SUPPORT_FLAGS = ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.FAN_MODE
+SUPPORT_FLAGS = ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.FAN_MODE | ClimateEntityFeature.TURN_OFF | ClimateEntityFeature.TURN_ON
 
 """
 Supported hvac modes:
@@ -129,6 +129,10 @@ class DuepiEvoDevice(ClimateEntity):
     """Representation of a DuepiEvoDevice."""
 
     def __init__(self, session, config) -> None:
+
+        self._enable_turn_on_off_backwards_compatibility = False
+        self._attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.TURN_OFF | ClimateEntityFeature.TURN_ON
+
         """Initialize the DuepiEvoDevice."""
         self._session = session
         self._name = config.get(CONF_NAME)
