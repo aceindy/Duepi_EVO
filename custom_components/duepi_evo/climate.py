@@ -412,7 +412,7 @@ class DuepiEvoDevice(ClimateEntity):
             self._hvac_mode = HVACMode.OFF
         elif self._burner_status in ["Cooling down"]:
             self._heating = True
-            self._hvac_mode = HVACMode.OFFF
+            self._hvac_mode = HVACMode.OFF
         else:
             self._heating = True
             self._hvac_mode = HVACMode.HEAT
