@@ -23,6 +23,7 @@ Pin layout is mentioned in the pdf (pcb, J8)
 Easiest way to install ESP-Link is to use this page from my GitHub site [ESP-Link](https://aceindy.github.io/esp-link/)
 Note that I have re-compiled the firmware to host on ports 23 and 2000, which allows to use the newer myDPRemote app too (as it has port 2000 hardcoded).
 
+
 In order to install the newer firmware, first install the firmware normally, then use the upgrade page on the web interface to install [user2.bin](https://github.com/aceindy/esp-link/blob/master/user2.bin) (use the raw download button on the right)
 
 #### As well as Espeasy (info from a Duroflame Rembrand user):
