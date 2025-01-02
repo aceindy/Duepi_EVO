@@ -324,12 +324,13 @@ class DuepiEvoDevice(ClimateEntity):
                 sock.settimeout(3.0)
                 sock.connect((self._host, self._port))
                 set_point_int = int(target_temperature)
-                code_hex_str = hex(set_point_int + 75)
-                set_point_hex_str = hex(set_point_int)
-                data = SET_TEMPERATURE
-                datayy = data.replace("yy", code_hex_str[2:4])
-                dataxy = datayy.replace("xx", set_point_hex_str[2:4])
-                sock.send(dataxy.encode())
+                OFFSET = (97, 75)[set_point_int > 15]
+                code_hex_str = f"{(set_point_int + OFFSET):02X}"
+                set_point_hex_str = f"{set_point_int:02X}"
+                data = SET_TEMPERATURE \
+                    .replace("xx", set_point_hex_str) \
+                    .replace("yy", code_hex_str)
+                sock.send(data.encode())
                 data_from_server = sock.recv(10).decode()
                 current_state = int(data_from_server[1:9], 16)
                 if not (STATE_ACK & current_state):
