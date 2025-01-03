@@ -2,15 +2,18 @@
 
 configuration.yaml
 
+# Example configuration.yaml entry
 climate:
-    - platform: duepi_evo
-        name: Duepi Evo
-        host: <IP_ADDRESS>
-        unique_id: <unique_name>
-        port: 23
-        scan_interval: 10
-        auto_reset: True
-       temp_nofeedback: 16
+  - platform: duepi_evo
+    name: Qlima Viola 85
+    host: 192.168.1.123
+    port: 2000
+    scan_interval: 60
+    min_temp: 10
+    max_temp: 30
+    auto_reset: True
+    unique_id: my_pellet_stove_1
+    temp_nofeedback: 16
 """
 
 import asyncio
