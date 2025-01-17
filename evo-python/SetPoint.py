@@ -7,10 +7,14 @@ sock.connect(("192.168.100.29", 23))
 setPoint = 20
 setPointInt = int(setPoint)
 
-if setPointInt > 15:
-    OFFSET = 75
-else:
+if setPointInt < 16:
     OFFSET = 97
+elif setPointInt <= 25:
+    OFFSET = 75
+elif setPointInt <= 31:
+    OFFSET = 82
+else:
+    OFFSET = 60
 
 set_point_hex = f"{setPointInt:02X}"
 offset_hex    = f"{(setPointInt + OFFSET):02X}"
