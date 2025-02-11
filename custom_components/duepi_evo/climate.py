@@ -110,7 +110,7 @@ SET_AUGERCOR = "\x1bRD50005A&"
 SET_EXTRACTORCOR = "\x1bRD50005B&"
 SET_TEMPERATURE = "\x1bRF2xx0yy&"
 SET_PELLETCOR = "\x1bRD50005B&"
-SET_POWERLEVEL = "\x1bRF00xx0yy&"
+SET_POWERLEVEL = "\x1bRF00x0yy&"
 SET_POWEROFF = "\x1bRF000058&"
 SET_POWERON = "\x1bRF001059&"
 
@@ -295,7 +295,7 @@ class DuepiEvoDevice(ClimateEntity):
                 code_hex_str = hex(88 + self._fan_mode_map[fan_mode])
                 data_yy = SET_POWERLEVEL.replace("yy", code_hex_str[2:4])
                 power_level_hex_str = hex(self._fan_mode_map[fan_mode])
-                data_xx = data_yy.replace("xx", power_level_hex_str[2:3])
+                data_xx = data_yy.replace("x", power_level_hex_str[2:3])
                 sock.send(data_xx.encode())
                 data_from_server = sock.recv(10).decode()
                 current_state = int(data_from_server[1:9], 16)
