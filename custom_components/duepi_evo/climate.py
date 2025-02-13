@@ -345,7 +345,12 @@ class DuepiEvoDevice(ClimateEntity):
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(3.0)
                 sock.connect((self._host, self._port))
-                power_level_hex_str = hex(self._fan_mode_map[hvac_mode[0].upper() + hvac_mode[1:]]) #Capitalize first character
+                if hvac_mode == "off":
+                    self._hvac_mode = HVACMode.OFF
+                    power_level_hex_str = hex(hex(self._fan_mode_map[0])) #Power off = 0
+                elif hvac_mode == "heat":
+                    self._hvac_mode = HVACMode.HEAT
+                    power_level_hex_str = hex(hex(self._fan_mode_map[1])) #Power On > 1
                 data = SET_POWERLEVEL.replace("x", power_level_hex_str[2:3])
                 data = self.generate_command(data)
                 sock.send(data.encode())
@@ -353,10 +358,6 @@ class DuepiEvoDevice(ClimateEntity):
                 current_state = int(data_from_server[1:9], 16)
                 if not (STATE_ACK & current_state):
                     _LOGGER.error("%s: unknown return value %s", self.name, data_from_server)
-                if hvac_mode == "off":
-                    self._hvac_mode = HVACMode.OFF
-                elif hvac_mode == "heat":
-                    self._hvac_mode = HVACMode.HEAT
 
         except TimeoutError:
             _LOGGER.error("Time-out while setting hvac mode on host: %s", self._host)
