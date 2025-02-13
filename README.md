@@ -79,26 +79,32 @@ entities:
     type: attribute
     name: Burner Status
     attribute: burner_status
+    icon: mdi:fire-circle
   - entity: climate.pellet_stove
     type: attribute
     name: Error code
     attribute: error_code
+    icon: mdi:code-array
   - entity: climate.pellet_stove
     type: attribute
     name: Exhaust fan speed
     attribute: exh_fan_speed
+    icon: mdi:fan
   - entity: climate.pellet_stove
     type: attribute
     name: Flu gas temperature
     attribute: flu_gas_temp
+    icon: mdi:temperature-celsius
   - entity: climate.pellet_stove
     type: attribute
     name: Pellet speed
     attribute: pellet_speed
+    icon: mdi:speedometer
   - entity: climate.pellet_stove
     type: attribute
     name: Power level
     attribute: power_level
+    icon: mdi:power-cycle
 ```
 
 Confirmed working on:
