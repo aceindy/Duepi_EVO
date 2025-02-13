@@ -6,7 +6,7 @@ With this module it is possible to control your pellet stove with [HomeAssistant
 
 This is in no way associated with the company Duepi and comes with no guarantees or warranty. Use at your own risk.
 
-![image](https://github.com/aceindy/Duepi_EVO/assets/94692/5f2bd263-4e17-418d-a467-09fda2802d0e)
+![image](https://github.com/user-attachments/assets/5f820ef9-7ab9-4dc2-88cc-a643e5076973)
 
 ## Prerequisites
 ### Hardware
