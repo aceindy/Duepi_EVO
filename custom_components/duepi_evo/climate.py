@@ -347,10 +347,10 @@ class DuepiEvoDevice(ClimateEntity):
                 sock.connect((self._host, self._port))
                 if hvac_mode == "off":
                     self._hvac_mode = HVACMode.OFF
-                    power_level_hex_str = hex(hex(self._fan_mode_map[0])) #Power off = 0
+                    power_level_hex_str = hex(self._fan_mode_map["Min"])
                 elif hvac_mode == "heat":
                     self._hvac_mode = HVACMode.HEAT
-                    power_level_hex_str = hex(hex(self._fan_mode_map[1])) #Power On > 1
+                    power_level_hex_str = hex(self._fan_mode_map["Off"])
                 data = SET_POWERLEVEL.replace("x", power_level_hex_str[2:3])
                 data = self.generate_command(data)
                 sock.send(data.encode())
