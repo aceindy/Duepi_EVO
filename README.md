@@ -25,8 +25,6 @@ Easiest way to install ESP-Link is to use this page from my GitHub site [ESP-Lin
 Note that I have re-compiled the firmware to host on ports 23 and 2000, which allows to use the newer myDPRemote app too (as it has port 2000 hardcoded).
 
 
-In order to install the newer firmware, first install the firmware normally, then use the upgrade page on the web interface to install [user2.bin](https://github.com/aceindy/esp-link/blob/master/user2.bin) (use the raw download button on the right)
-
 #### As well as Espeasy (info from a Duroflame Rembrand user):
 Optionally one can use the Wemos D1 flashed with [ESPeasy](https://www.letscontrolit.com/wiki/index.php/ESPEasy). This device has a 5V input and integrated CH340 for easy flashing. The only tweak needed was to add 5ms timeout delay in the serial device settings of espeasy to get robust data from the pellet stove. In Esp_easy flashed device select the Device: Communication - [Serial Server](https://www.letscontrolit.com/wiki/index.php?title=Ser2Net) and fill in the appropiate fields (harware serial GPIO-3 and -1, port 1234 (or any) baud rate 115200, serial config 8N1,RX receive 5ms, 256 buffer). 
 
