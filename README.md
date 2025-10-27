@@ -107,12 +107,15 @@ Confirmed working on:
 - Amesti 8100 plus2
 - AMG
 - Artel
+- Casatelli Leonardo 8/9
 - Centrometal
 - Duroflame Carré
 - Duroflame Pelle
 - Duroflame Rembrand
+- FireShop Dinamica 6
 - Foco
 - Interstove
+- Italia mod 8 el
 - Julia Next
 - Kalor
 - Qlima Viola 85 S-Line
