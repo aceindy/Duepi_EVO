@@ -125,3 +125,6 @@ Big thanks go to Pascal Bornat (who initially started reverse engineering for Je
 and Oxan van Leeuwen (for the Stream server for ESPHomeproject)
 
 [Buy Me A Coffee](https://ko-fi.com/aceindy)! :coffee:
+
+## Star History
+[![Star History Chart](https://api.star-history.com/svg?repos=aceindy/Duepi_EVO&type=date&legend=top-left)](https://www.star-history.com/#aceindy/Duepi_EVO&type=date&legend=top-left)
