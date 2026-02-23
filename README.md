@@ -47,6 +47,7 @@ climate:
     auto_reset: True
     unique_id: <unique_name>
     temp_nofeedback: 16
+    init_command: False
 ```
 Configuration variables:
 
@@ -58,6 +59,7 @@ Configuration variables:
 - **auto_reset** (*optional*): Auto reset the stove when "Ignition failed" or "Out of pellets" defaults to False.
 - **unique_id** (*optional*): A unique name for the device. Defaults to "duepi_unique". Change when using multiple stoves
 - **temp_nofeedback** (*optional*): The default setpoint temperature for stoves that do not store the current setpoint. Defauls to 16.
+- **init_command** (*optional*): Some stoves need to receive this init command before any request. If the logs show a "Time-out while polling host: 192.168.0.x" you can try to set this to True
 
 ## Troubleshooting
 Please set your logging for the custom_component to debug:
@@ -120,6 +122,7 @@ Confirmed working on:
 - Kalor
 - Qlima Viola 85 S-Line
 - Wamsler Westminster Quatro 6
+- Stove Canadian Next 7kW (needs **init_command: True** configuration)
 
 Big thanks go to Pascal Bornat (who initially started reverse engineering for Jeedom)
 and Oxan van Leeuwen (for the Stream server for ESPHomeproject)
