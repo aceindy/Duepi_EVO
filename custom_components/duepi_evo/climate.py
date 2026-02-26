@@ -262,6 +262,7 @@ class DuepiEvoClimateEntity(CoordinatorEntity[DuepiEvoCoordinator], ClimateEntit
         self._min_temp = min_temp
         self._max_temp = max_temp
         self._no_feedback = no_feedback
+        self._legacy_attr_warning_logged = False
 
     @property
     def name(self) -> str:
@@ -347,6 +348,13 @@ class DuepiEvoClimateEntity(CoordinatorEntity[DuepiEvoCoordinator], ClimateEntit
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Expose legacy attributes during transition period."""
+        if not self._legacy_attr_warning_logged:
+            _LOGGER.warning(
+                "Legacy Duepi EVO climate attributes are deprecated and will be removed "
+                "after two releases. Please use dedicated sensor entities instead."
+            )
+            self._legacy_attr_warning_logged = True
+
         state = self._state
         if state is None:
             return {

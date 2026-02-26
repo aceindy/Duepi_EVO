@@ -85,7 +85,6 @@ logger:
   logs:
     custom_components.duepi_evo: debug
 ```
-
 ## Development (devcontainer/local helper scripts)
 The helper scripts auto-detect the repository root from their own path.
 For local runs, use Python 3.13.2 or newer.
@@ -96,41 +95,21 @@ WORKSPACE=/absolute/path/to/Duepi_EVO bash scripts/setup.sh
 WORKSPACE=/absolute/path/to/Duepi_EVO bash scripts/ha.sh start
 ```
 
-## Example Lovelace entities card:
+## Example Lovelace entities card (new dedicated sensors):
 ```yaml
 type: entities
 entities:
   - entity: climate.pellet_stove
-    type: attribute
-    name: Burner Status
-    attribute: burner_status
-    icon: mdi:fire-circle
-  - entity: climate.pellet_stove
-    type: attribute
-    name: Error code
-    attribute: error_code
-    icon: mdi:code-array
-  - entity: climate.pellet_stove
-    type: attribute
-    name: Exhaust fan speed
-    attribute: exh_fan_speed
-    icon: mdi:fan
-  - entity: climate.pellet_stove
-    type: attribute
-    name: Flu gas temperature
-    attribute: flu_gas_temp
-    icon: mdi:temperature-celsius
-  - entity: climate.pellet_stove
-    type: attribute
-    name: Pellet speed
-    attribute: pellet_speed
-    icon: mdi:speedometer
-  - entity: climate.pellet_stove
-    type: attribute
-    name: Power level
-    attribute: power_level
-    icon: mdi:power-cycle
+  - entity: sensor.pellet_stove_burner_status
+  - entity: sensor.pellet_stove_error_code
+  - entity: sensor.pellet_stove_exh_fan_speed
+  - entity: sensor.pellet_stove_flu_gas_temp
+  - entity: sensor.pellet_stove_pellet_speed
+  - entity: sensor.pellet_stove_power_level
 ```
+
+### Legacy climate attributes
+Legacy `climate.*` attributes are still exposed for compatibility and are planned to be removed after two releases.
 
 Confirmed working on:
 - Amesti 8100 plus2

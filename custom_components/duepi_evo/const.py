@@ -6,7 +6,7 @@ from homeassistant.components.climate import HVACMode
 from homeassistant.const import Platform
 
 DOMAIN = "duepi_evo"
-PLATFORMS: list[Platform] = [Platform.CLIMATE]
+PLATFORMS: list[Platform] = [Platform.CLIMATE, Platform.SENSOR]
 
 DEFAULT_NAME = "Duepi EVO"
 DEFAULT_HOST = ""
