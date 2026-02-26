@@ -1,0 +1,40 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Duepi EVO",
+        "description": "Configure connection details for your stove bridge.",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "name": "Name",
+          "unique_id": "Unique ID"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the stove",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "Device is already configured",
+      "cannot_connect": "Cannot connect to device during import",
+      "already_in_progress": "Configuration is already in progress"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Duepi EVO options",
+        "data": {
+          "min_temp": "Minimum temperature",
+          "max_temp": "Maximum temperature",
+          "auto_reset": "Auto reset on ignition or pellet errors",
+          "temp_nofeedback": "Fallback setpoint when stove does not report setpoint",
+          "init_command": "Send initialization command before each request",
+          "scan_interval": "Polling interval (seconds)"
+        }
+      }
+    }
+  }
+}
