@@ -32,10 +32,26 @@ Optionally one can use the Wemos D1 flashed with [ESPeasy](https://www.letscontr
 - Control fan speed (only when actual temperature below target temperature) 1-5
 
 ## Configuration
-Add the following to your `configuration.yaml` file:
+### Recommended: UI setup (Config Flow)
+1. Go to **Settings -> Devices & Services -> Add Integration**.
+2. Search for **Duepi EVO**.
+3. Enter:
+   - `host`
+   - `port`
+   - `name`
+   - `unique_id`
+4. After creation, edit options to configure:
+   - `scan_interval`
+   - `min_temp`
+   - `max_temp`
+   - `auto_reset`
+   - `temp_nofeedback`
+   - `init_command`
+
+### Legacy YAML configuration (deprecated)
+YAML is still supported temporarily and will be auto-imported into Config Entries when possible.
 
 ```yaml
-# Example configuration.yaml entry
 climate:
   - platform: duepi_evo
     name: <your heaters name here>
@@ -44,20 +60,22 @@ climate:
     scan_interval: 60
     min_temp: 20
     max_temp: 30
-    auto_reset: True
+    auto_reset: true
     unique_id: <unique_name>
     temp_nofeedback: 16
+    init_command: false
 ```
-Configuration variables:
 
-- **name** (*optional*): The name of your climate entity. Defaults to "Duepi Evo".
-- **host** (*required*): The IP address used for the serial@tcp device.
-- **port** (*optional*): The port being used. Defaults to 2000. (when using my ESPLink version, you can also use the default telnet port 23)
-- **scan_interval** (*required*): The scan interval being used in seconds.
-- **min/max_temperature** (*optional*): The available setpoint range within HA. Default is 16-30 degs celsius.
-- **auto_reset** (*optional*): Auto reset the stove when "Ignition failed" or "Out of pellets" defaults to False.
-- **unique_id** (*optional*): A unique name for the device. Defaults to "duepi_unique". Change when using multiple stoves
-- **temp_nofeedback** (*optional*): The default setpoint temperature for stoves that do not store the current setpoint. Defauls to 16.
+Configuration variables:
+- **name** (*optional*): Name of your climate entity. Defaults to "Duepi EVO".
+- **host** (*required*): IP address used for the serial@tcp device.
+- **port** (*optional*): Port in use. Defaults to 23.
+- **scan_interval** (*optional*): Poll interval in seconds. Defaults to 60.
+- **min_temp / max_temp** (*optional*): Available setpoint range in HA. Defaults to 16-30.
+- **auto_reset** (*optional*): Auto reset when "Ignition failure" or "Out of pellets". Defaults to false.
+- **unique_id** (*optional*): Custom unique suffix. Defaults to "duepi_unique".
+- **temp_nofeedback** (*optional*): Fallback setpoint when stove does not report setpoint. Defaults to 16.
+- **init_command** (*optional*): Send required init command before each request for some stove models.
 
 ## Troubleshooting
 Please set your logging for the custom_component to debug:
@@ -78,7 +96,7 @@ WORKSPACE=/absolute/path/to/Duepi_EVO bash scripts/setup.sh
 WORKSPACE=/absolute/path/to/Duepi_EVO bash scripts/ha.sh start
 ```
 
-## Example lovelace entities card:
+## Example Lovelace entities card:
 ```yaml
 type: entities
 entities:
