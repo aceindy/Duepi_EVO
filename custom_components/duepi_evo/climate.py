@@ -91,7 +91,7 @@ PLATFORM_SCHEMA = CLIMATE_PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_AUTO_RESET, default=DEFAULT_AUTO_RESET): cv.boolean,
         vol.Optional(CONF_NOFEEDBACK, default=DEFAULT_NOFEEDBACK): cv.positive_float,
         vol.Optional(CONF_UNIQUE_ID, default=DEFAULT_UNIQUE_ID): cv.string,
-        vol.Optional(CONF_INIT_COMMAND, default=DEFAULT_INIT_COMMAND): cv.string,
+        vol.Optional(CONF_INIT_COMMAND, default=DEFAULT_INIT_COMMAND): cv.boolean,
     }
 )
 
