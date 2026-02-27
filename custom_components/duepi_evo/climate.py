@@ -14,10 +14,12 @@ climate:
     auto_reset: True
     unique_id: my_pellet_stove_1
     temp_nofeedback: 16
+    init_command: False
 """
 
 import asyncio
 import logging
+import select
 import socket
 from typing import Any
 
@@ -72,11 +74,13 @@ DEFAULT_MAX_TEMP = 30.0
 DEFAULT_NOFEEDBACK = 16.0
 DEFAULT_AUTO_RESET = False
 DEFAULT_UNIQUE_ID = "duepi_unique"
+DEFAULT_INIT_COMMAND = False
 CONF_MIN_TEMP = "min_temp"
 CONF_MAX_TEMP = "max_temp"
 CONF_AUTO_RESET = "auto_reset"
 CONF_NOFEEDBACK = "temp_nofeedback"
 CONF_UNIQUE_ID = "unique_id"
+CONF_INIT_COMMAND = "init_command"
 
 PLATFORM_SCHEMA = CLIMATE_PLATFORM_SCHEMA.extend(
     {
@@ -88,6 +92,7 @@ PLATFORM_SCHEMA = CLIMATE_PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_AUTO_RESET, default=DEFAULT_AUTO_RESET): cv.boolean,
         vol.Optional(CONF_NOFEEDBACK, default=DEFAULT_NOFEEDBACK): cv.positive_float,
         vol.Optional(CONF_UNIQUE_ID, default=DEFAULT_UNIQUE_ID): cv.string,
+        vol.Optional(CONF_INIT_COMMAND, default=DEFAULT_INIT_COMMAND): cv.boolean,
     }
 )
 
@@ -109,6 +114,7 @@ REMOTE_RESET =    "D6000"
 GET_STATUS =      "D9000"
 GET_ERRORSTATE =  "DA000"
 GET_EXHFANSPEED = "EF000"
+GET_INITCOMMAND = "DC000"
 
 SET_POWERLEVEL =  "F00x0"
 SET_TEMPERATURE = "F2xx0"
@@ -138,6 +144,7 @@ class DuepiEvoDevice(ClimateEntity):
         self._auto_reset = config.get(CONF_AUTO_RESET)
         self._no_feedback = config.get(CONF_NOFEEDBACK)
         self._unique_id = config.get(CONF_UNIQUE_ID)
+        self._init_command = config.get(CONF_INIT_COMMAND)
         self._current_temperature = None
         self._target_temperature = None
         self._heating = False
@@ -267,6 +274,38 @@ class DuepiEvoDevice(ClimateEntity):
         """Return the list of available fan modes."""
         return self._fan_modes
 
+    @property
+    def init_command(self) -> bool:
+        """Return the init_command setting."""
+        return self._init_command
+
+    def _send_init_command_if_needed(self, sock: socket.socket) -> None:
+        """Send optional init command and consume any immediate optional response frame."""
+        if not self.init_command:
+            return
+
+        sock.send(self.generate_command(GET_INITCOMMAND).encode())
+
+        try:
+            ready_to_read, _, _ = select.select([sock], [], [], 0.2)
+        except OSError as err:
+            _LOGGER.debug("%s init_command readiness check failed: %s", self._name, err)
+            return
+
+        if not ready_to_read:
+            return
+
+        try:
+            init_response = sock.recv(10).decode()
+        except (TimeoutError, socket.timeout):
+            return
+        except OSError as err:
+            _LOGGER.debug("%s init_command response read failed: %s", self._name, err)
+            return
+
+        if init_response:
+            _LOGGER.debug("%s init_command response consumed: %s", self._name, init_response)
+
     async def async_added_to_hass(self) -> None:
         """Run when entity about to be added."""
         await super().async_added_to_hass()
@@ -296,6 +335,7 @@ class DuepiEvoDevice(ClimateEntity):
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(3.0)
                 sock.connect((self._host, self._port))
+                self._send_init_command_if_needed(sock)
                 power_level_hex_str = hex(self._fan_mode_map[fan_mode])
                 data = SET_POWERLEVEL.replace("x", power_level_hex_str[2:3])
                 data = self.generate_command(data)
@@ -332,6 +372,7 @@ class DuepiEvoDevice(ClimateEntity):
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(3.0)
                 sock.connect((self._host, self._port))
+                self._send_init_command_if_needed(sock)
                 set_point_int = int(target_temperature)
                 set_point_hex_str = f"{set_point_int:02X}"
                 data = SET_TEMPERATURE.replace("xx", set_point_hex_str)
@@ -362,6 +403,7 @@ class DuepiEvoDevice(ClimateEntity):
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(3.0)
                 sock.connect((self._host, self._port))
+                self._send_init_command_if_needed(sock)
                 # Set the power level to 0 (Off) or 1 (Min) when changing mode
                 if hvac_mode == "off":
                     self._hvac_mode = HVACMode.OFF
@@ -395,6 +437,7 @@ class DuepiEvoDevice(ClimateEntity):
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(3.0)
                 sock.connect((self._host, self._port))
+                self._send_init_command_if_needed(sock)
                 sock.send(self.generate_command(REMOTE_RESET).encode())
                 response = sock.recv(10).decode()
                 current_state = int(response[1:9], 16)
@@ -415,7 +458,15 @@ class DuepiEvoDevice(ClimateEntity):
         data = await self.get_data(SUPPORT_SETPOINT)
         self._burner_status = data[0]
         self._current_temperature = data[1]
-        self._current_fan_mode = self._fan_mode_map_rev[data[2]]
+        self._current_fan_mode = self._fan_mode_map_rev.get(data[2])
+        if self._current_fan_mode is None:
+            self._current_fan_mode = "Off"
+            _LOGGER.warning(
+                "%s Unknown fan mode value received: %s. Falling back to %s",
+                self._name,
+                data[2],
+                self._current_fan_mode,
+            )
         self._flugas_temp = data[3]
         self._exhaust_fan_speed = data[4]
         self._pellet_speed = data[5]
@@ -449,6 +500,7 @@ class DuepiEvoDevice(ClimateEntity):
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(3.0)
                 sock.connect((self._host, self._port))
+                self._send_init_command_if_needed(sock)
 
                 # Get Burner status
                 sock.send(self.generate_command(GET_STATUS).encode())
