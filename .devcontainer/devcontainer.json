@@ -1,15 +1,16 @@
 {
     "name": "Duepi EVO - Home Assistant Dev",
+    "workspaceFolder": "/workspace",
     "build": {
         "dockerfile": "Dockerfile",
         "context": ".."
     },
     "mounts": [
         "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
-        // commment if you don't have any .ssh directory which allows you to use ssh keys for git operations
+        // comment if you don't have any .ssh directory which allows you to use ssh keys for git operations
         "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached"
         // some UI card useful for development and testing. Uncomment and adapt the path if you have some
-        // "source=${localEnv:HOME}/<directory>/xxx-ui-card/dist,target=/workspaces/Duepi_EVO/config/www/community/xxx-ui-card,type=bind",
+        // "source=${localEnv:HOME}/<directory>/xxx-ui-card/dist,target=/workspace/config/www/community/xxx-ui-card,type=bind",
     ],
     "customizations": {
         "vscode": {
@@ -31,7 +32,7 @@
                 "bierner.markdown-mermaid"
             ],
             "settings": {
-                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.defaultInterpreterPath": "/workspace/.venv/bin/python",
                 "editor.formatOnSave": true,
                 "editor.defaultFormatter": "ms-python.black-formatter",
                 "[python]": {

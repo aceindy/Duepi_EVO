@@ -67,6 +67,17 @@ logger:
   logs:
     custom_components.duepi_evo: debug
 ```
+
+## Development (devcontainer/local helper scripts)
+The helper scripts auto-detect the repository root from their own path.
+For local runs, use Python 3.13.2 or newer.
+If needed, you can override the workspace location explicitly:
+
+```bash
+WORKSPACE=/absolute/path/to/Duepi_EVO bash scripts/setup.sh
+WORKSPACE=/absolute/path/to/Duepi_EVO bash scripts/ha.sh start
+```
+
 ## Example lovelace entities card:
 ```yaml
 type: entities
