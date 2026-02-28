@@ -8,10 +8,11 @@
 #   ./scripts/ha.sh restart  – Stop then start Home Assistant
 # ---------------------------------------------------------------------------
 set -euo pipefail
+set -x
 
 # Resolve workspace root (parent of the directory containing this script)
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WORKSPACE="${SCRIPT_DIR}/.."
+WORKSPACE="/workspaces/Duepi_EVO"
+SCRIPT_DIR="${WORKSPACE}/scripts"
 CONFIG_DIR="${WORKSPACE}/config"
 
 HA_PROCESS="hass"
@@ -22,7 +23,8 @@ ha_start() {
     source "${SCRIPT_DIR}/setup.sh"
 
     echo "[ha.sh] Starting Home Assistant with config: ${CONFIG_DIR}"
-    hass --config "${CONFIG_DIR}" --debug
+    cd ${WORKSPACE} || exit 1
+    ${HA_PROCESS} --config "${CONFIG_DIR}" --debug
 }
 
 ha_stop() {

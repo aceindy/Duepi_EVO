@@ -4,8 +4,10 @@
 # Run automatically via postCreateCommand in devcontainer.json
 # ---------------------------------------------------------------------------
 set -euo pipefail
+set -x
 
-WORKSPACE="${WORKSPACE:-/workspace}"
+WORKSPACE="/workspaces/Duepi_EVO"
+SCRIPT_DIR="${WORKSPACE}/scripts"
 CONFIG_DIR="${WORKSPACE}/config"
 DEVCONTAINER_CONFIG="${WORKSPACE}/.devcontainer/configuration.yaml"
 HA_CONFIG="${CONFIG_DIR}/configuration.yaml"
@@ -21,6 +23,7 @@ pip install --user -r "${WORKSPACE}/requirements_test.txt"
 # 2. Create the Home Assistant config directory
 echo "[2/3] Creating HA config directory at ${CONFIG_DIR} …"
 mkdir -p "${CONFIG_DIR}"
+chmod -R 777 "${CONFIG_DIR}"
 
 # 3. Symlink .devcontainer/configuration.yaml → config/configuration.yaml
 echo "[3/3] Linking ${DEVCONTAINER_CONFIG} → ${HA_CONFIG} …"
