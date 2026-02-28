@@ -47,7 +47,8 @@
                 "reveal": "always",
                 "focus": false,
                 "panel": "shared"
-            }
+            },
+            "problemMatcher": []
         },
         {
             "label": "Home Assistant: Restart",
