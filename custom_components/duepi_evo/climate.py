@@ -456,6 +456,9 @@ class DuepiEvoDevice(ClimateEntity):
     async def async_update(self) -> None:
         """Update local data with data from stove."""
         data = await self.get_data(SUPPORT_SETPOINT)
+        if data is None:
+            _LOGGER.error("%s: No data received during update", self._name)
+            return
         self._burner_status = data[0]
         self._current_temperature = data[1]
         self._current_fan_mode = self._fan_mode_map_rev.get(data[2])
