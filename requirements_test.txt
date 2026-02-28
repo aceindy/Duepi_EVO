@@ -1,0 +1,5 @@
+# Dev dependencies
+-r requirements_dev.txt
+
+# Testing framework for Home Assistant custom components (latest)
+pytest-homeassistant-custom-component

@@ -1,0 +1,14 @@
+# Home Assistant configuration – used inside the dev container
+# This file is symlinked from config/configuration.yaml by scripts/setup.sh
+
+default_config:
+
+# Logging – verbose for the custom component during development
+logger:
+  default: warning
+  logs:
+    custom_components.duepi_evo: debug
+
+# Uncomment to expose HA on a custom port inside the container
+# http:
+#   server_port: 8123

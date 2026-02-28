@@ -1,0 +1,7 @@
+# Core Home Assistant (used for type hints and API compatibility)
+homeassistant
+
+# Code quality
+pylint
+black
+isort
