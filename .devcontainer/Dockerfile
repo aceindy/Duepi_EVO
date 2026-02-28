@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     build-essential \
     ffmpeg libturbojpeg0-dev \
+    libpcap-dev libpcap0.8-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements files (context is the workspace root)
