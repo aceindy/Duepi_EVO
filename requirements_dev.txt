@@ -1,2 +1,11 @@
 # Core Home Assistant (used for type hints and API compatibility)
 homeassistant==2026.2.2
+
+# Home Assistant frontend (required by the frontend component)
+home-assistant-frontend
+
+# Debugger support (used by the debugpy integration)
+debugpy
+
+# JPEG acceleration (required by the camera component)
+pyturbojpeg
