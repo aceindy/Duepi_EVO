@@ -21,6 +21,7 @@ LOVELACE_DASHBOARD_TEST_DST="${CONFIG_DIR}/.storage/lovelace.dashboard_test"
 REQUIREMENTS_FILE="${WORKSPACE}/requirements_test.txt"
 VENV_DIR="${WORKSPACE}/.venv"
 MIN_PYTHON_VERSION="3.13.2"
+VENV_PYTHON="${VENV_DIR}/bin/python"
 
 if [ ! -d "${WORKSPACE}" ]; then
     echo "ERROR: WORKSPACE does not exist: ${WORKSPACE}" >&2
@@ -48,12 +49,22 @@ echo "────────────────────────�
 
 # 1. Install Python packages
 echo "[1/6] Creating/using virtualenv at ${VENV_DIR} and installing requirements …"
-if [ ! -d "${VENV_DIR}" ]; then
+if [ ! -d "${VENV_DIR}" ] || [ ! -x "${VENV_PYTHON}" ]; then
+    rm -rf "${VENV_DIR}"
     python3 -m venv "${VENV_DIR}"
 fi
-# shellcheck disable=SC1091
-source "${VENV_DIR}/bin/activate"
-python - <<'PY'
+if ! "${VENV_PYTHON}" - <<'PY'
+import sys
+min_version = (3, 13, 2)
+raise SystemExit(0 if sys.version_info >= min_version else 1)
+PY
+then
+    echo "      Existing virtualenv Python is too old, recreating ${VENV_DIR}."
+    rm -rf "${VENV_DIR}"
+    python3 -m venv "${VENV_DIR}"
+fi
+export PATH="${VENV_DIR}/bin:${PATH}"
+"${VENV_PYTHON}" - <<'PY'
 import sys
 min_version = (3, 13, 2)
 if sys.version_info < min_version:
@@ -62,8 +73,8 @@ if sys.version_info < min_version:
         f"found {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}."
     )
 PY
-python -m pip install --upgrade pip
-pip install -r "${REQUIREMENTS_FILE}"
+"${VENV_PYTHON}" -m pip install --upgrade pip
+"${VENV_PYTHON}" -m pip install -r "${REQUIREMENTS_FILE}"
 
 # 2. Create the Home Assistant config directory
 echo "[2/6] Creating HA config directory at ${CONFIG_DIR} …"
