@@ -1,5 +1,10 @@
 # Dev dependencies
 -r requirements_dev.txt
 
-# Testing framework for Home Assistant custom components (latest)
+-r requirements_dev.txt
+aiodiscover
+ulid_transform
+pytest
+coverage
+pytest-asyncio
 pytest-homeassistant-custom-component

@@ -12,3 +12,16 @@ logger:
 # Uncomment to expose HA on a custom port inside the container
 # http:
 #   server_port: 8123
+
+climate:
+  - platform: duepi_evo
+    name: Poele Pellets
+    host: 192.168.1.xx # put you own IP here
+    port: 23
+    scan_interval: 60
+    min_temp: 20
+    max_temp: 30
+    auto_reset: True
+    unique_id: poele_pellet
+    temp_nofeedback: 16
+    init_command: False
