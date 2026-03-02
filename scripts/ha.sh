@@ -11,20 +11,37 @@ set -euo pipefail
 set -x
 
 # Resolve workspace root (parent of the directory containing this script)
-WORKSPACE="/workspaces/Duepi_EVO"
-SCRIPT_DIR="${WORKSPACE}/scripts"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEFAULT_WORKSPACE="$(cd "${SCRIPT_DIR}/.." && pwd)"
+WORKSPACE="${WORKSPACE:-${DEFAULT_WORKSPACE}}"
+SCRIPTS_DIR="${WORKSPACE}/scripts"
 CONFIG_DIR="${WORKSPACE}/config"
 
-HA_PROCESS="hass"
+if [ ! -d "${WORKSPACE}" ]; then
+    echo "[ha.sh] ERROR: WORKSPACE does not exist: ${WORKSPACE}" >&2
+    exit 1
+fi
+
+if [ ! -f "${SCRIPTS_DIR}/setup.sh" ]; then
+    echo "[ha.sh] ERROR: setup.sh not found at ${SCRIPTS_DIR}/setup.sh" >&2
+    exit 1
+fi
+
+HA_PROCESS="${HA_PROCESS:-hass}"
 
 ha_start() {
     echo "[ha.sh] Initializing environment …"
     # shellcheck source=setup.sh
-    source "${SCRIPT_DIR}/setup.sh"
+    source "${SCRIPTS_DIR}/setup.sh"
+
+    if ! command -v "${HA_PROCESS}" >/dev/null 2>&1; then
+        echo "[ha.sh] ERROR: '${HA_PROCESS}' command not found in PATH." >&2
+        exit 1
+    fi
 
     echo "[ha.sh] Starting Home Assistant with config: ${CONFIG_DIR}"
-    cd ${WORKSPACE} || exit 1
-    ${HA_PROCESS} --config "${CONFIG_DIR}" --debug
+    cd "${WORKSPACE}" || exit 1
+    "${HA_PROCESS}" --config "${CONFIG_DIR}" --debug
 }
 
 ha_stop() {
