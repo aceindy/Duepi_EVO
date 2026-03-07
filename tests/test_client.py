@@ -8,6 +8,7 @@ import pytest
 
 from homeassistant.components.climate import HVACMode
 
+from custom_components.duepi_evo import client as client_module
 from custom_components.duepi_evo.client import (
     DuepiEvoClient,
     DuepiEvoProtocolError,
@@ -79,6 +80,7 @@ def test_set_temperature_sends_init_command_when_enabled(monkeypatch: pytest.Mon
         return sock
 
     monkeypatch.setattr("socket.socket", fake_socket)
+    monkeypatch.setattr(client_module.select, "select", lambda _read, _write, _error, _timeout: ([], [], []))
 
     client = _client(init_command=True)
     client.set_temperature(23)
