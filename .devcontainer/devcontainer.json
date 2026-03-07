@@ -1,0 +1,51 @@
+{
+    "name": "Duepi EVO - Home Assistant Dev",
+    "workspaceFolder": "/workspace",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": ".."
+    },
+    "mounts": [
+        "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+        // comment if you don't have any .ssh directory which allows you to use ssh keys for git operations
+        "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached"
+        // some UI card useful for development and testing. Uncomment and adapt the path if you have some
+        // "source=${localEnv:HOME}/<directory>/xxx-ui-card/dist,target=/workspace/config/www/community/xxx-ui-card,type=bind",
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                // Python utils
+                "ms-python.python",
+                "ms-python.pylint",
+                "ms-python.isort",
+                "ms-python.black-formatter",
+                // Github utils
+                "github.copilot",
+                "github.copilot-chat",
+                "donjayamanne.githistory",
+                "waderyan.gitblame",
+                // usefull utils
+                "ferrierbenjamin.fold-unfold-all-icone",
+                "vscode.markdown-math",
+                "yzhang.markdown-all-in-one",
+                "bierner.markdown-mermaid"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/workspace/.venv/bin/python",
+                "editor.formatOnSave": true,
+                "editor.defaultFormatter": "ms-python.black-formatter",
+                "[python]": {
+                    "editor.defaultFormatter": "ms-python.black-formatter",
+                    "editor.codeActionsOnSave": {
+                        "source.organizeImports": "explicit"
+                    }
+                },
+                "isort.args": ["--profile", "black"]
+            }
+        }
+    },
+    "appPort": ["8123:8123"],
+    "postCreateCommand": "bash /workspace/scripts/setup.sh",
+    "remoteUser": "vscode"
+}

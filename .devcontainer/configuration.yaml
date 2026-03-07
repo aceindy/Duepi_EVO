@@ -1,0 +1,57 @@
+# Home Assistant configuration – used inside the dev container
+# This file is symlinked from config/configuration.yaml by scripts/setup.sh
+
+# default_config is intentionally NOT used here because it pulls in go2rtc,
+# which requires a Docker binary unavailable in the dev container.
+# Instead, list only the components needed for development:
+frontend:
+config:
+history:
+logbook:
+homeassistant:
+system_health:
+energy:
+
+http:
+  server_host: "0.0.0.0"
+  server_port: 8123
+
+# Logging – verbose for the custom component during development
+logger:
+  default: warning
+  logs:
+    custom_components.duepi_evo: debug
+
+debugpy:
+    start: true
+    wait: false
+    port: 5678
+
+recorder:
+  auto_purge: true
+  purge_keep_days: 1
+  commit_interval: 5
+  include:
+      domains:
+          - input_boolean
+          - input_number
+          - input_select
+          - switch
+          - climate
+          - sensor
+          - binary_sensor
+          - number
+          - select
+
+climate:
+  - platform: duepi_evo
+    name: Poele Pellets
+    host: 192.168.1.86 # put you own IP here
+    port: 2000
+    scan_interval: 60
+    min_temp: 20
+    max_temp: 30
+    auto_reset: True
+    unique_id: poele_pellet
+    temp_nofeedback: 16
+    # init_command: False

@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "lovelace_dashboards",
+  "data": {
+    "items": [
+      {
+        "id": "map",
+        "icon": "mdi:map",
+        "title": "Map",
+        "url_path": "map",
+        "require_admin": false,
+        "show_in_sidebar": true,
+        "mode": "storage"
+      },
+      {
+        "id": "dashboard_test",
+        "show_in_sidebar": true,
+        "icon": "mdi:stove",
+        "title": "Test",
+        "require_admin": false,
+        "mode": "storage",
+        "url_path": "dashboard-test"
+      }
+    ]
+  }
+}

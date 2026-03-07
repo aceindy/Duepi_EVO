@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "lovelace.dashboard_test",
+  "data": {
+    "config": {
+      "views": [
+        {
+          "type": "sections",
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Thermostat",
+                  "heading_style": "title",
+                  "icon": "mdi:thermostat"
+                },
+                {
+                  "type": "thermostat",
+                  "entity": "climate.poele_pellets",
+                  "show_current_as_primary": true,
+                  "features": [
+                    {
+                      "type": "climate-fan-modes",
+                      "style": "dropdown"
+                    },
+                    {
+                      "type": "climate-hvac-modes"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Attributes",
+                  "heading_style": "title",
+                  "icon": "mdi:format-list-bulleted"
+                },
+                {
+                  "type": "entities",
+                  "entities": [
+                    {
+                      "entity": "climate.poele_pellets",
+                      "type": "attribute",
+                      "name": "Burner Status",
+                      "attribute": "burner_status",
+                      "icon": "mdi:fire-circle"
+                    },
+                    {
+                      "entity": "climate.poele_pellets",
+                      "type": "attribute",
+                      "name": "Error code",
+                      "attribute": "error_code",
+                      "icon": "mdi:code-array"
+                    },
+                    {
+                      "entity": "climate.poele_pellets",
+                      "type": "attribute",
+                      "name": "Exhaust fan speed",
+                      "attribute": "exh_fan_speed",
+                      "icon": "mdi:fan"
+                    },
+                    {
+                      "entity": "climate.poele_pellets",
+                      "type": "attribute",
+                      "name": "Flu gas temperature",
+                      "attribute": "flu_gas_temp",
+                      "icon": "mdi:temperature-celsius"
+                    },
+                    {
+                      "entity": "climate.poele_pellets",
+                      "type": "attribute",
+                      "name": "Pellet speed",
+                      "attribute": "pellet_speed",
+                      "icon": "mdi:speedometer"
+                    },
+                    {
+                      "entity": "climate.poele_pellets",
+                      "type": "attribute",
+                      "name": "Power level",
+                      "attribute": "power_level",
+                      "icon": "mdi:power-cycle"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

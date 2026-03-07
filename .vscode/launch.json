@@ -1,0 +1,43 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Home Assistant (Debug)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "homeassistant",
+            "args": [
+                "--debug",
+                "--log-level",
+                "DEBUG",
+                "-c",
+                "${workspaceFolder}/config"
+            ],
+            "jinja": true,
+            "justMyCode": false,
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}:${PYTHONPATH}"
+            }
+        },
+        {
+            "name": "Home Assistant (Attach)",
+            "type": "debugpy",
+            "request": "attach"
+        },
+        {
+            "name": "Integration Tests",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "tests/",
+                "-v",
+                "--tb=short"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
