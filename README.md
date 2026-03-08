@@ -47,6 +47,7 @@ climate:
     auto_reset: True
     unique_id: <unique_name>
     temp_nofeedback: 16
+    init_command: False
 ```
 Configuration variables:
 
@@ -58,6 +59,7 @@ Configuration variables:
 - **auto_reset** (*optional*): Auto reset the stove when "Ignition failed" or "Out of pellets" defaults to False.
 - **unique_id** (*optional*): A unique name for the device. Defaults to "duepi_unique". Change when using multiple stoves
 - **temp_nofeedback** (*optional*): The default setpoint temperature for stoves that do not store the current setpoint. Defauls to 16.
+- **init_command** (*optional*): Some stoves require a additional init_command before it accepts a command. Use this when you receive time-outs on new commands (see log).
 
 ## Troubleshooting
 Please set your logging for the custom_component to debug:
@@ -117,6 +119,7 @@ entities:
 Confirmed working on:
 - Amesti 8100 plus2
 - AMG
+- ALP srl Guisy
 - Artel
 - Casatelli Leonardo 8/9
 - Centrometal
