@@ -8,7 +8,7 @@
 #   ./scripts/ha.sh restart  – Stop then start Home Assistant
 # ---------------------------------------------------------------------------
 set -euo pipefail
-set -x
+# set -x
 
 # Resolve workspace root (parent of the directory containing this script)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

@@ -4,7 +4,7 @@
 # Run automatically via postCreateCommand in devcontainer.json
 # ---------------------------------------------------------------------------
 set -euo pipefail
-set -x
+# set -x
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEFAULT_WORKSPACE="$(cd "${SCRIPT_DIR}/.." && pwd)"
