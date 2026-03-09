@@ -84,7 +84,7 @@ class DuepiEvoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             CONF_HOST: DEFAULT_HOST,
             CONF_PORT: DEFAULT_PORT,
             CONF_NAME: DEFAULT_NAME,
-            CONF_UNIQUE_ID: DEFAULT_UNIQUE_ID,
+            CONF_INIT_COMMAND: DEFAULT_INIT_COMMAND,
         }
 
         if user_input is not None:
@@ -98,14 +98,14 @@ class DuepiEvoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_HOST: host,
                 CONF_PORT: port,
                 CONF_NAME: user_input[CONF_NAME],
-                CONF_UNIQUE_ID: user_input.get(CONF_UNIQUE_ID, DEFAULT_UNIQUE_ID),
+                CONF_UNIQUE_ID: DEFAULT_UNIQUE_ID,
             }
             options = {
                 CONF_MIN_TEMP: DEFAULT_MIN_TEMP,
                 CONF_MAX_TEMP: DEFAULT_MAX_TEMP,
                 CONF_AUTO_RESET: DEFAULT_AUTO_RESET,
                 CONF_NOFEEDBACK: DEFAULT_NOFEEDBACK,
-                CONF_INIT_COMMAND: DEFAULT_INIT_COMMAND,
+                CONF_INIT_COMMAND: bool(user_input[CONF_INIT_COMMAND]),
                 CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
             }
 
@@ -126,7 +126,7 @@ class DuepiEvoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Coerce(int), vol.Range(min=1, max=65535)
                 ),
                 vol.Required(CONF_NAME, default=defaults[CONF_NAME]): str,
-                vol.Required(CONF_UNIQUE_ID, default=defaults[CONF_UNIQUE_ID]): str,
+                vol.Required(CONF_INIT_COMMAND, default=defaults[CONF_INIT_COMMAND]): bool,
             }
         )
         return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
@@ -167,7 +167,7 @@ class DuepiEvoOptionsFlow(config_entries.OptionsFlow):
     """Handle Duepi EVO options."""
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
-        self.config_entry = config_entry
+        self._config_entry = config_entry
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> config_entries.FlowResult:
         """Manage options."""
@@ -175,12 +175,12 @@ class DuepiEvoOptionsFlow(config_entries.OptionsFlow):
             return self.async_create_entry(title="", data=user_input)
 
         defaults = {
-            CONF_MIN_TEMP: self.config_entry.options.get(CONF_MIN_TEMP, DEFAULT_MIN_TEMP),
-            CONF_MAX_TEMP: self.config_entry.options.get(CONF_MAX_TEMP, DEFAULT_MAX_TEMP),
-            CONF_AUTO_RESET: self.config_entry.options.get(CONF_AUTO_RESET, DEFAULT_AUTO_RESET),
-            CONF_NOFEEDBACK: self.config_entry.options.get(CONF_NOFEEDBACK, DEFAULT_NOFEEDBACK),
-            CONF_INIT_COMMAND: self.config_entry.options.get(CONF_INIT_COMMAND, DEFAULT_INIT_COMMAND),
-            CONF_SCAN_INTERVAL: self.config_entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
+            CONF_MIN_TEMP: self._config_entry.options.get(CONF_MIN_TEMP, DEFAULT_MIN_TEMP),
+            CONF_MAX_TEMP: self._config_entry.options.get(CONF_MAX_TEMP, DEFAULT_MAX_TEMP),
+            CONF_AUTO_RESET: self._config_entry.options.get(CONF_AUTO_RESET, DEFAULT_AUTO_RESET),
+            CONF_NOFEEDBACK: self._config_entry.options.get(CONF_NOFEEDBACK, DEFAULT_NOFEEDBACK),
+            CONF_INIT_COMMAND: self._config_entry.options.get(CONF_INIT_COMMAND, DEFAULT_INIT_COMMAND),
+            CONF_SCAN_INTERVAL: self._config_entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
         }
 
         schema = vol.Schema(

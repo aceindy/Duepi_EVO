@@ -8,7 +8,7 @@
           "host": "Host",
           "port": "Port",
           "name": "Name",
-          "unique_id": "Unique ID"
+          "init_command": "Send initialization command before each request"
         }
       }
     },
