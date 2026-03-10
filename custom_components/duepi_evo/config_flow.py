@@ -31,6 +31,7 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_UNIQUE_ID,
     DOMAIN,
+    entry_unique_id,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -41,11 +42,6 @@ def _scan_interval_to_seconds(value: Any) -> int:
     if isinstance(value, timedelta):
         return int(value.total_seconds())
     return int(value)
-
-
-def _entry_unique_id(host: str, port: int) -> str:
-    """Build config entry unique ID from host/port."""
-    return f"{host}:{port}"
 
 
 class DuepiEvoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -90,7 +86,7 @@ class DuepiEvoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             host = user_input[CONF_HOST]
             port = user_input[CONF_PORT]
-            unique_id = _entry_unique_id(host, port)
+            unique_id = entry_unique_id(host, port)
             await self.async_set_unique_id(unique_id)
             self._abort_if_unique_id_configured()
 
@@ -135,7 +131,7 @@ class DuepiEvoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle YAML import."""
         host = import_config[CONF_HOST]
         port = import_config[CONF_PORT]
-        unique_id = _entry_unique_id(host, port)
+        unique_id = entry_unique_id(host, port)
 
         await self.async_set_unique_id(unique_id)
         self._abort_if_unique_id_configured()

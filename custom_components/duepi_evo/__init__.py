@@ -7,6 +7,7 @@ from datetime import timedelta
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_SCAN_INTERVAL
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 
 from .client import DuepiEvoClient
 from .const import (
@@ -26,6 +27,7 @@ from .const import (
     PLATFORMS,
 )
 from .coordinator import DuepiEvoCoordinator
+from .entity_migration import migrate_climate_entity_registry
 
 
 def _build_client_from_entry(entry: ConfigEntry) -> DuepiEvoClient:
@@ -51,6 +53,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Duepi EVO from a config entry."""
     hass.data.setdefault(DOMAIN, {})
+    migrate_climate_entity_registry(er.async_get(hass), entry)
 
     client = _build_client_from_entry(entry)
     scan_interval = int(entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL))

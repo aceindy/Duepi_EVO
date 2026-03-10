@@ -60,3 +60,18 @@ ATTR_EXH_FAN_SPEED = "exh_fan_speed"
 ATTR_FLU_GAS_TEMP = "flu_gas_temp"
 ATTR_PELLET_SPEED = "pellet_speed"
 ATTR_POWER_LEVEL = "power_level"
+
+
+def entry_unique_id(host: str, port: int) -> str:
+    """Build a stable config-entry unique ID from host/port."""
+    return f"{host}:{port}"
+
+
+def climate_unique_id_from_entry_unique_id(config_entry_unique_id: str) -> str:
+    """Build a stable climate entity unique ID from the config-entry unique ID."""
+    return f"{config_entry_unique_id}:climate"
+
+
+def climate_unique_id(host: str, port: int) -> str:
+    """Build a stable climate entity unique ID from host/port."""
+    return climate_unique_id_from_entry_unique_id(entry_unique_id(host, port))

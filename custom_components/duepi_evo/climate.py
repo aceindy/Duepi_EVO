@@ -59,8 +59,11 @@ from .const import (
     DOMAIN,
     FAN_MODES,
     SUPPORT_MODES,
+    climate_unique_id_from_entry_unique_id,
+    entry_unique_id,
 )
 from .coordinator import DuepiEvoCoordinator
+from .entity_migration import stable_yaml_fallback_unique_id
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -194,7 +197,10 @@ async def async_setup_platform(
             DuepiEvoClimateEntity(
                 coordinator=coordinator,
                 name=import_data[CONF_NAME],
-                unique_id=f"yaml_{import_data[CONF_UNIQUE_ID]}_{import_data[CONF_HOST]}_{import_data[CONF_PORT]}",
+                unique_id=stable_yaml_fallback_unique_id(
+                    import_data[CONF_HOST],
+                    import_data[CONF_PORT],
+                ),
                 min_temp=float(import_data[CONF_MIN_TEMP]),
                 max_temp=float(import_data[CONF_MAX_TEMP]),
                 no_feedback=float(import_data[CONF_NOFEEDBACK]),
@@ -211,7 +217,11 @@ async def async_setup_entry(
     """Set up climate entity from config entry."""
     coordinator: DuepiEvoCoordinator = hass.data[DOMAIN][entry.entry_id]
     name = entry.data.get(CONF_NAME, DEFAULT_NAME)
-    unique_id = f"{entry.entry_id}_{entry.data.get(CONF_UNIQUE_ID, DEFAULT_UNIQUE_ID)}"
+    config_entry_unique_id = entry.unique_id or entry_unique_id(
+        entry.data[CONF_HOST],
+        entry.data[CONF_PORT],
+    )
+    unique_id = climate_unique_id_from_entry_unique_id(config_entry_unique_id)
     min_temp = float(entry.options.get(CONF_MIN_TEMP, DEFAULT_MIN_TEMP))
     max_temp = float(entry.options.get(CONF_MAX_TEMP, DEFAULT_MAX_TEMP))
     no_feedback = float(entry.options.get(CONF_NOFEEDBACK, DEFAULT_NOFEEDBACK))
