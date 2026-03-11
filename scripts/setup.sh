@@ -47,6 +47,48 @@ echo "────────────────────────�
 echo " Duepi EVO – Container initialisation"
 echo "──────────────────────────────────────────"
 
+ensure_symlink() {
+    local src="$1"
+    local dst="$2"
+    local kind="$3"
+
+    if [ -L "${dst}" ]; then
+        local current_target
+        current_target="$(readlink "${dst}")"
+        if [ "${current_target}" = "${src}" ] && [ -e "${dst}" ]; then
+            echo "      Symlink already exists and is valid, skipping."
+            return
+        fi
+
+        echo "      Existing symlink is stale or points elsewhere, recreating."
+        rm -f "${dst}"
+        ln -sf "${src}" "${dst}"
+        echo "      Symlink recreated."
+        return
+    fi
+
+    if [ "${kind}" = "directory" ] && [ -d "${dst}" ]; then
+        echo "      WARNING: ${dst} is a real directory, skipping symlink creation."
+        echo "      Remove it manually and re-run this script if you want the symlink."
+        return
+    fi
+
+    if [ "${kind}" = "file" ] && [ -f "${dst}" ]; then
+        echo "      WARNING: ${dst} is a regular file, skipping symlink creation."
+        echo "      Remove it manually and re-run this script if you want the symlink."
+        return
+    fi
+
+    if [ -e "${dst}" ]; then
+        echo "      WARNING: ${dst} already exists and is not a symlink, skipping."
+        echo "      Remove it manually and re-run this script if you want the symlink."
+        return
+    fi
+
+    ln -sf "${src}" "${dst}"
+    echo "      Symlink created."
+}
+
 # 1. Install Python packages
 echo "[1/6] Creating/using virtualenv at ${VENV_DIR} and installing requirements …"
 if [ ! -d "${VENV_DIR}" ] || [ ! -x "${VENV_PYTHON}" ]; then
@@ -83,53 +125,21 @@ chmod -R 777 "${CONFIG_DIR}"
 
 # 3. Symlink .devcontainer/configuration.yaml → config/configuration.yaml
 echo "[3/6] Linking ${DEVCONTAINER_CONFIG} → ${HA_CONFIG} …"
-if [ -L "${HA_CONFIG}" ]; then
-    echo "      Symlink already exists, skipping."
-elif [ -f "${HA_CONFIG}" ]; then
-    echo "      WARNING: ${HA_CONFIG} is a regular file, skipping symlink creation."
-    echo "      Remove it manually and re-run this script if you want the symlink."
-else
-    ln -sf "${DEVCONTAINER_CONFIG}" "${HA_CONFIG}"
-    echo "      Symlink created."
-fi
+ensure_symlink "${DEVCONTAINER_CONFIG}" "${HA_CONFIG}" "file"
 
 # 4. Symlink custom_components/duepi_evo → config/custom_components/duepi_evo
 echo "[4/6] Linking ${CUSTOM_COMPONENTS_SRC} → ${CUSTOM_COMPONENTS_DST} …"
 mkdir -p "${CONFIG_DIR}/custom_components"
-if [ -L "${CUSTOM_COMPONENTS_DST}" ]; then
-    echo "      Symlink already exists, skipping."
-elif [ -d "${CUSTOM_COMPONENTS_DST}" ]; then
-    echo "      WARNING: ${CUSTOM_COMPONENTS_DST} is a real directory, skipping symlink creation."
-    echo "      Remove it manually and re-run this script if you want the symlink."
-else
-    ln -sf "${CUSTOM_COMPONENTS_SRC}" "${CUSTOM_COMPONENTS_DST}"
-    echo "      Symlink created."
-fi
+ensure_symlink "${CUSTOM_COMPONENTS_SRC}" "${CUSTOM_COMPONENTS_DST}" "directory"
 
 # 5. Symlink .devcontainer/lovelace_dashboards → config/.storage/lovelace_dashboards
 echo "[5/6] Linking ${LOVELACE_DASHBOARDS_SRC} → ${LOVELACE_DASHBOARDS_DST} …"
 mkdir -p "${CONFIG_DIR}/.storage"
-if [ -L "${LOVELACE_DASHBOARDS_DST}" ]; then
-    echo "      Symlink already exists, skipping."
-elif [ -f "${LOVELACE_DASHBOARDS_DST}" ]; then
-    echo "      WARNING: ${LOVELACE_DASHBOARDS_DST} is a regular file, skipping symlink creation."
-    echo "      Remove it manually and re-run this script if you want the symlink."
-else
-    ln -sf "${LOVELACE_DASHBOARDS_SRC}" "${LOVELACE_DASHBOARDS_DST}"
-    echo "      Symlink created."
-fi
+ensure_symlink "${LOVELACE_DASHBOARDS_SRC}" "${LOVELACE_DASHBOARDS_DST}" "file"
 
 # 6. Symlink .devcontainer/lovelace.dashboard_test → config/.storage/lovelace.dashboard_test
 echo "[6/6] Linking ${LOVELACE_DASHBOARD_TEST_SRC} → ${LOVELACE_DASHBOARD_TEST_DST} …"
-if [ -L "${LOVELACE_DASHBOARD_TEST_DST}" ]; then
-    echo "      Symlink already exists, skipping."
-elif [ -f "${LOVELACE_DASHBOARD_TEST_DST}" ]; then
-    echo "      WARNING: ${LOVELACE_DASHBOARD_TEST_DST} is a regular file, skipping symlink creation."
-    echo "      Remove it manually and re-run this script if you want the symlink."
-else
-    ln -sf "${LOVELACE_DASHBOARD_TEST_SRC}" "${LOVELACE_DASHBOARD_TEST_DST}"
-    echo "      Symlink created."
-fi
+ensure_symlink "${LOVELACE_DASHBOARD_TEST_SRC}" "${LOVELACE_DASHBOARD_TEST_DST}" "file"
 
 echo ""
 echo "✔ Setup complete. Happy coding!"

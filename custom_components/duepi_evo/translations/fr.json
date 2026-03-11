@@ -1,0 +1,40 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configurer Duepi EVO",
+        "description": "Configurez les informations de connexion du pont de votre poele.",
+        "data": {
+          "host": "Hote",
+          "port": "Port",
+          "name": "Nom",
+          "init_command": "Envoyer la commande d'initialisation avant chaque requete"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossible de se connecter au poele",
+      "unknown": "Erreur inattendue"
+    },
+    "abort": {
+      "already_configured": "L'appareil est deja configure",
+      "cannot_connect": "Impossible de se connecter a l'appareil pendant l'import",
+      "already_in_progress": "Une configuration est deja en cours"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options Duepi EVO",
+        "data": {
+          "min_temp": "Temperature minimale",
+          "max_temp": "Temperature maximale",
+          "auto_reset": "Reinitialisation automatique sur erreur d'allumage ou de pellets",
+          "temp_nofeedback": "Consigne de secours quand le poele ne renvoie pas sa consigne",
+          "init_command": "Envoyer la commande d'initialisation avant chaque requete",
+          "scan_interval": "Intervalle de polling (secondes)"
+        }
+      }
+    }
+  }
+}
