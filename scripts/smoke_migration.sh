@@ -25,6 +25,7 @@ STARTUP_TIMEOUT="${DUEPI_SMOKE_STARTUP_TIMEOUT:-45}"
 CLIMATE_ENTITY_ID="${DUEPI_SMOKE_CLIMATE_ENTITY_ID:-climate.poele_pellets}"
 LEGACY_UNIQUE_ID="${DUEPI_SMOKE_LEGACY_UNIQUE_ID:-poele_pellet}"
 STABLE_BASE="${EMULATOR_HOST}:${EMULATOR_PORT}"
+DOCKER_RUN_USER="$(id -u):$(id -g)"
 
 TMP_ROOT=""
 FROM_WORKTREE=""
@@ -208,6 +209,11 @@ install_component() {
     cp -R "${source_root}/custom_components/duepi_evo" "${config_dir}/custom_components/duepi_evo"
 }
 
+ensure_container_runtime_dirs() {
+    local config_dir="$1"
+    mkdir -p "${config_dir}/.cache" "${config_dir}/.home"
+}
+
 assert_logs_clean() {
     local logfile="$1"
     if grep -En "Traceback \\(most recent call last\\)|Error while setting up duepi_evo|Platform error climate\\.duepi_evo|Setup failed for custom integration duepi_evo" "${logfile}" >/dev/null; then
@@ -220,9 +226,13 @@ run_check_config() {
     local config_dir="$1"
     local logfile="$2"
     echo "[smoke_migration] Running hass --script check_config"
+    ensure_container_runtime_dirs "${config_dir}"
     docker run --rm \
         --name "duepi-smoke-check-$$" \
         --network "${NETWORK_NAME}" \
+        --user "${DOCKER_RUN_USER}" \
+        -e HOME=/config/.home \
+        -e XDG_CACHE_HOME=/config/.cache \
         -v "${config_dir}:/config" \
         "${SMOKE_IMAGE}" \
         bash -lc "hass --script check_config --config /config" >"${logfile}" 2>&1
@@ -232,11 +242,15 @@ run_hass_startup() {
     local config_dir="$1"
     local logfile="$2"
     echo "[smoke_migration] Starting Home Assistant for ${STARTUP_TIMEOUT}s"
+    ensure_container_runtime_dirs "${config_dir}"
     local status=0
     set +e
     docker run --rm \
         --name "duepi-smoke-ha-$$" \
         --network "${NETWORK_NAME}" \
+        --user "${DOCKER_RUN_USER}" \
+        -e HOME=/config/.home \
+        -e XDG_CACHE_HOME=/config/.cache \
         -v "${config_dir}:/config" \
         "${SMOKE_IMAGE}" \
         bash -lc "timeout ${STARTUP_TIMEOUT}s hass --config /config --debug" >"${logfile}" 2>&1
