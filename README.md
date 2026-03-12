@@ -93,6 +93,8 @@ If needed, you can override the workspace location explicitly:
 ```bash
 WORKSPACE=/absolute/path/to/Duepi_EVO bash scripts/setup.sh
 WORKSPACE=/absolute/path/to/Duepi_EVO bash scripts/ha.sh start
+WORKSPACE=/absolute/path/to/Duepi_EVO bash scripts/smoke_migration.sh
+WORKSPACE=/absolute/path/to/Duepi_EVO bash scripts/smoke_migration.sh --skip-migration
 ```
 
 ## Example Lovelace entities card (new dedicated sensors):
