@@ -144,6 +144,14 @@ def test_fetch_state_parses_protocol_frames(monkeypatch: pytest.MonkeyPatch) -> 
     assert state.heating is True
 
 
+def test_hvac_from_status_maps_cooling_down_to_heat_without_heating() -> None:
+    """Cooling down should keep HEAT mode while exposing an idle action."""
+    hvac_mode, heating = DuepiEvoClient._hvac_from_status("Cooling down")
+
+    assert hvac_mode == HVACMode.HEAT
+    assert heating is False
+
+
 def test_fetch_state_raises_protocol_error_on_malformed_frame(monkeypatch: pytest.MonkeyPatch) -> None:
     """Short/invalid frames should raise a protocol error."""
 

@@ -328,10 +328,12 @@ class DuepiEvoClimateEntity(CoordinatorEntity[DuepiEvoCoordinator], ClimateEntit
         state = self._state
         if state is None:
             return HVACAction.OFF
-        if state.burner_status in {"Eco idle", "Eco Idle"}:
+        if state.burner_status in {"Eco idle", "Eco Idle", "Cooling down"}:
             return HVACAction.IDLE
         if state.heating:
             return HVACAction.HEATING
+        if state.hvac_mode == HVACMode.HEAT:
+            return HVACAction.IDLE
         return HVACAction.OFF
 
     @property
