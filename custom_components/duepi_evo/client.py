@@ -186,7 +186,7 @@ class DuepiEvoClient:
         if status == "Off":
             return HVACMode.OFF, False
         if status == "Cooling down":
-            return HVACMode.OFF, True
+            return HVACMode.HEAT, False
         return HVACMode.HEAT, True
 
     def fetch_state(self) -> DuepiEvoState:
