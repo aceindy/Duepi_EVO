@@ -144,12 +144,26 @@ def test_fetch_state_parses_protocol_frames(monkeypatch: pytest.MonkeyPatch) -> 
     assert state.heating is True
 
 
-def test_hvac_from_status_maps_cooling_down_to_heat_without_heating() -> None:
-    """Cooling down should keep HEAT mode while exposing an idle action."""
-    hvac_mode, heating = DuepiEvoClient._hvac_from_status("Cooling down")
+@pytest.mark.parametrize(
+    ("status", "expected_hvac_mode", "expected_heating"),
+    [
+        ("Off", HVACMode.OFF, False),
+        ("Cooling down", HVACMode.HEAT, False),
+        ("Flame On", HVACMode.HEAT, True),
+        ("Eco idle", HVACMode.HEAT, True),
+        ("Cleaning", HVACMode.HEAT, True),
+    ],
+)
+def test_hvac_from_status_mapping(
+    status: str,
+    expected_hvac_mode: HVACMode,
+    expected_heating: bool,
+) -> None:
+    """Burner status should map to the expected HVAC mode and heating flag."""
+    hvac_mode, heating = DuepiEvoClient._hvac_from_status(status)
 
-    assert hvac_mode == HVACMode.HEAT
-    assert heating is False
+    assert hvac_mode == expected_hvac_mode
+    assert heating is expected_heating
 
 
 def test_fetch_state_raises_protocol_error_on_malformed_frame(monkeypatch: pytest.MonkeyPatch) -> None:
