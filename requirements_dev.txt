@@ -7,5 +7,8 @@ home-assistant-frontend
 # Debugger support (used by the debugpy integration)
 debugpy
 
+# Colorized output used by `hass --script check_config`
+colorlog==6.10.1
+
 # JPEG acceleration (required by the camera component)
 pyturbojpeg
