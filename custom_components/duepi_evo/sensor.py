@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorEntityDescription
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_NAME, UnitOfTemperature
+from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -15,15 +16,17 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .client import DuepiEvoState
 from .const import (
     ATTR_BURNER_STATUS,
+    ATTR_BURN_TIME_SINCE_RESET,
     ATTR_ERROR_CODE,
     ATTR_EXH_FAN_SPEED,
     ATTR_FLU_GAS_TEMP,
+    ATTR_PCB_TEMP,
     ATTR_PELLET_SPEED,
     ATTR_POWER_LEVEL,
-    CONF_UNIQUE_ID,
+    ATTR_TOTAL_BURN_TIME,
     DEFAULT_NAME,
-    DEFAULT_UNIQUE_ID,
     DOMAIN,
+    entry_unique_id,
 )
 from .coordinator import DuepiEvoCoordinator
 
@@ -69,6 +72,25 @@ SENSOR_DESCRIPTIONS: tuple[DuepiEvoSensorDescription, ...] = (
         name="Power Level",
         value_fn=lambda state: state.power_level,
     ),
+    DuepiEvoSensorDescription(
+        key=ATTR_PCB_TEMP,
+        name="PCB Temperature",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        value_fn=lambda state: state.pcb_temp_c,
+    ),
+    DuepiEvoSensorDescription(
+        key=ATTR_TOTAL_BURN_TIME,
+        name="Total Burn Time",
+        native_unit_of_measurement="h",
+        value_fn=lambda state: state.total_burn_time_h,
+    ),
+    DuepiEvoSensorDescription(
+        key=ATTR_BURN_TIME_SINCE_RESET,
+        name="Burn Time Since Reset",
+        native_unit_of_measurement="h",
+        value_fn=lambda state: state.burn_time_since_reset_h,
+    ),
 )
 
 
@@ -80,7 +102,10 @@ async def async_setup_entry(
     """Set up Duepi EVO sensors from config entry."""
     coordinator: DuepiEvoCoordinator = hass.data[DOMAIN][entry.entry_id]
     name = entry.data.get(CONF_NAME, DEFAULT_NAME)
-    unique_base = f"{entry.entry_id}_{entry.data.get(CONF_UNIQUE_ID, DEFAULT_UNIQUE_ID)}"
+    unique_base = entry.unique_id or entry_unique_id(
+        entry.data[CONF_HOST],
+        entry.data[CONF_PORT],
+    )
 
     async_add_entities(
         [
@@ -110,7 +135,7 @@ class DuepiEvoSensorEntity(CoordinatorEntity[DuepiEvoCoordinator], SensorEntity)
         super().__init__(coordinator)
         self.entity_description = description
         self._attr_name = f"{name} {description.name}"
-        self._attr_unique_id = f"{unique_base}_{description.key}"
+        self._attr_unique_id = f"{unique_base}:sensor:{description.key}"
 
     @property
     def native_value(self) -> Any:

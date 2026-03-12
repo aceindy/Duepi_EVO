@@ -12,15 +12,21 @@ from homeassistant.components.climate import HVACMode
 from .const import (
     FAN_MODE_MAP,
     FAN_MODE_MAP_REV,
+    GET_BURN_TIME,
     GET_ERRORSTATE,
     GET_EXHFANSPEED,
     GET_FLUGASTEMP,
     GET_INITCOMMAND,
+    GET_PCBTEMP,
     GET_PELLETSPEED,
+    GET_PRESSURE_SWITCH,
     GET_POWERLEVEL,
     GET_SETPOINT,
     GET_STATUS,
     GET_TEMPERATURE,
+    GET_TOTAL_BURN_TIME,
+    PRESSURE_SWITCH_OK,
+    PRESSURE_SWITCH_PRESSURE,
     REMOTE_RESET,
     SET_POWERLEVEL,
     SET_TEMPERATURE,
@@ -58,6 +64,10 @@ class DuepiEvoState:
     flu_gas_temp_c: int | None
     pellet_speed: int | None
     power_level: str
+    pcb_temp_c: int | None
+    total_burn_time_h: int | None
+    burn_time_since_reset_h: int | None
+    pressure_switch_active: bool | None
     current_temp_c: float | None
     target_temp_c: float | None
     hvac_mode: HVACMode
@@ -164,6 +174,33 @@ class DuepiEvoClient:
             raise DuepiEvoProtocolError(f"No ACK for command {command}, response={response!r}")
 
     @staticmethod
+    def _read_hex_value(response: str, digits: int) -> int:
+        """Parse a hex field from the start of a response payload."""
+        return int(response[1 : 1 + digits], 16)
+
+    def _optional_read(
+        self,
+        sock: socket.socket,
+        command: str,
+        *,
+        description: str,
+        parser,
+    ):
+        """Read optional telemetry without failing the main snapshot."""
+        try:
+            response = self._send_and_recv(sock, command)
+            return parser(response)
+        except (DuepiEvoProtocolError, TimeoutError, socket.timeout, ValueError) as err:
+            _LOGGER.debug(
+                "Optional %s read failed for %s:%s: %s",
+                description,
+                self.host,
+                self.port,
+                err,
+            )
+            return None
+
+    @staticmethod
     def _decode_status(current_state: int) -> str:
         """Decode burner status flags."""
         if STATE_START & current_state:
@@ -189,6 +226,22 @@ class DuepiEvoClient:
             return HVACMode.HEAT, False
         return HVACMode.HEAT, True
 
+    def _decode_pressure_switch(self, response: str) -> bool | None:
+        """Decode the pressure switch status returned by RC0000."""
+        pressure_state = self._read_hex_value(response, 4)
+        if pressure_state == PRESSURE_SWITCH_OK:
+            return False
+        if pressure_state == PRESSURE_SWITCH_PRESSURE:
+            return True
+
+        _LOGGER.debug(
+            "Unexpected pressure switch payload from %s:%s: %s",
+            self.host,
+            self.port,
+            response,
+        )
+        return None
+
     def fetch_state(self) -> DuepiEvoState:
         """Fetch and parse a full stove state snapshot."""
         try:
@@ -203,7 +256,7 @@ class DuepiEvoClient:
                     power_level_code = FAN_MODE_MAP["Off"]
                 else:
                     power_response = self._send_and_recv(sock, GET_POWERLEVEL)
-                    power_level_code = int(power_response[1:5], 16)
+                    power_level_code = self._read_hex_value(power_response, 4)
                 power_level = FAN_MODE_MAP_REV.get(power_level_code)
                 if power_level is None:
                     power_level = "Off"
@@ -214,26 +267,51 @@ class DuepiEvoClient:
                     )
 
                 ambient_response = self._send_and_recv(sock, GET_TEMPERATURE)
-                current_temperature = int(ambient_response[1:5], 16) / 10.0
+                current_temperature = self._read_hex_value(ambient_response, 4) / 10.0
 
                 pellet_response = self._send_and_recv(sock, GET_PELLETSPEED)
-                pellet_speed = int(pellet_response[1:5], 16)
+                pellet_speed = self._read_hex_value(pellet_response, 4)
 
                 flugass_response = self._send_and_recv(sock, GET_FLUGASTEMP)
-                flu_gas_temp = int(flugass_response[1:5], 16)
+                flu_gas_temp = self._read_hex_value(flugass_response, 4)
 
                 exhaust_response = self._send_and_recv(sock, GET_EXHFANSPEED)
-                exh_fan_speed = int(exhaust_response[1:5], 16) * 10
+                exh_fan_speed = self._read_hex_value(exhaust_response, 4) * 10
 
                 error_response = self._send_and_recv(sock, GET_ERRORSTATE)
-                error_code_decimal = int(error_response[1:5], 16)
+                error_code_decimal = self._read_hex_value(error_response, 4)
                 error_code = self._error_code_map.get(error_code_decimal, str(error_code_decimal))
 
                 setpoint_response = self._send_and_recv(sock, GET_SETPOINT)
-                setpoint_raw = int(setpoint_response[1:5], 16)
+                setpoint_raw = self._read_hex_value(setpoint_response, 4)
                 target_temperature = None
                 if setpoint_raw != 0 and self.min_temp < setpoint_raw < self.max_temp:
                     target_temperature = float(setpoint_raw)
+
+                pcb_temp = self._optional_read(
+                    sock,
+                    GET_PCBTEMP,
+                    description="PCB temperature",
+                    parser=lambda response: self._read_hex_value(response, 4),
+                )
+                total_burn_time = self._optional_read(
+                    sock,
+                    GET_TOTAL_BURN_TIME,
+                    description="total burn time",
+                    parser=lambda response: self._read_hex_value(response, 6),
+                )
+                burn_time_since_reset = self._optional_read(
+                    sock,
+                    GET_BURN_TIME,
+                    description="burn time since reset",
+                    parser=lambda response: self._read_hex_value(response, 6),
+                )
+                pressure_switch_active = self._optional_read(
+                    sock,
+                    GET_PRESSURE_SWITCH,
+                    description="pressure switch",
+                    parser=self._decode_pressure_switch,
+                )
 
                 hvac_mode, heating = self._hvac_from_status(burner_status)
 
@@ -244,6 +322,10 @@ class DuepiEvoClient:
                     flu_gas_temp_c=flu_gas_temp,
                     pellet_speed=pellet_speed,
                     power_level=power_level,
+                    pcb_temp_c=pcb_temp,
+                    total_burn_time_h=total_burn_time,
+                    burn_time_since_reset_h=burn_time_since_reset,
+                    pressure_switch_active=pressure_switch_active,
                     current_temp_c=current_temperature,
                     target_temp_c=target_temperature,
                     hvac_mode=hvac_mode,

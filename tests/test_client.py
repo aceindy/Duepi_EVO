@@ -124,10 +124,17 @@ def test_fetch_state_parses_protocol_frames(monkeypatch: pytest.MonkeyPatch) -> 
         "\x1b00320000&",  # exh fan raw => 50 * 10 => 500 rpm
         "\x1b00050000&",  # error => 5 => Out of pellets
         "\x1b00170000&",  # setpoint => 23
+        "\x1b002D0000&",  # pcb temp => 45 C
+        "\x1b0001F400&",  # total burn time => 500 h
+        "\x1b00002A00&",  # burn time since reset => 42 h
+        "\x1b03000000&",  # pressure switch => pressure detected
     ]
+    created: list[FakeSocket] = []
 
     def fake_socket(*_args: Any, **_kwargs: Any) -> FakeSocket:
-        return FakeSocket(responses)
+        sock = FakeSocket(responses)
+        created.append(sock)
+        return sock
 
     monkeypatch.setattr("socket.socket", fake_socket)
 
@@ -140,8 +147,50 @@ def test_fetch_state_parses_protocol_frames(monkeypatch: pytest.MonkeyPatch) -> 
     assert state.exh_fan_speed_rpm == 500
     assert state.error_code == "Out of pellets"
     assert state.target_temp_c == 23.0
+    assert state.pcb_temp_c == 45
+    assert state.total_burn_time_h == 500
+    assert state.burn_time_since_reset_h == 42
+    assert state.pressure_switch_active is True
     assert state.hvac_mode == HVACMode.HEAT
     assert state.heating is True
+    assert len(created) == 1
+    sent_frames = b"".join(created[0].sent)
+    assert b"RDF000" in sent_frames
+    assert b"RED000" in sent_frames
+    assert b"REE000" in sent_frames
+    assert b"RC0000" in sent_frames
+
+
+def test_fetch_state_keeps_snapshot_when_pressure_switch_payload_is_unknown(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Unknown pressure switch payloads should not fail the main state refresh."""
+    responses = [
+        "\x1b02000000&",
+        "\x1b00020000&",
+        "\x1b00D70000&",
+        "\x1b00140000&",
+        "\x1b00C80000&",
+        "\x1b00320000&",
+        "\x1b00000000&",
+        "\x1b00170000&",
+        "\x1b002D0000&",
+        "\x1b0001F400&",
+        "\x1b00002A00&",
+        "\x1b99990000&",
+    ]
+
+    def fake_socket(*_args: Any, **_kwargs: Any) -> FakeSocket:
+        return FakeSocket(responses)
+
+    monkeypatch.setattr("socket.socket", fake_socket)
+    caplog.set_level("DEBUG")
+
+    state = _client(init_command=False).fetch_state()
+
+    assert state.pressure_switch_active is None
+    assert "Unexpected pressure switch payload" in caplog.text
 
 
 @pytest.mark.parametrize(

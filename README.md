@@ -106,6 +106,10 @@ entities:
   - entity: sensor.pellet_stove_flu_gas_temp
   - entity: sensor.pellet_stove_pellet_speed
   - entity: sensor.pellet_stove_power_level
+  - entity: sensor.pellet_stove_pcb_temperature
+  - entity: sensor.pellet_stove_total_burn_time
+  - entity: sensor.pellet_stove_burn_time_since_reset
+  - entity: binary_sensor.pellet_stove_pressure_switch
 ```
 
 ### Legacy climate attributes
