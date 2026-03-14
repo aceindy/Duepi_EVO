@@ -15,6 +15,7 @@ WORKSPACE="${WORKSPACE:-${DEFAULT_WORKSPACE}}"
 FROM_REF="${DUEPI_MIGRATION_BASE_REF:-v2026.03.02}"
 TO_REF=""
 SKIP_MIGRATION=0
+FALLBACK_REMOTE_URL="${DUEPI_MIGRATION_FALLBACK_REMOTE_URL:-https://github.com/aceindy/Duepi_EVO.git}"
 
 SMOKE_IMAGE="${DUEPI_SMOKE_IMAGE:-duepi-smoke-test:latest}"
 NETWORK_NAME="duepi-smoke-net-$$"
@@ -117,8 +118,49 @@ trap cleanup EXIT
 create_worktree() {
     local ref="$1"
     local target_dir="$2"
-    git -C "${WORKSPACE}" rev-parse --verify "${ref}^{commit}" >/dev/null
-    git -C "${WORKSPACE}" worktree add --detach "${target_dir}" "${ref}" >/dev/null
+    local commit
+    commit="$(resolve_ref_commit "${ref}")"
+    git -C "${WORKSPACE}" worktree add --detach "${target_dir}" "${commit}" >/dev/null
+}
+
+try_fetch_ref() {
+    local remote="$1"
+    local ref="$2"
+    git -C "${WORKSPACE}" fetch --depth=1 "${remote}" "${ref}" >/dev/null 2>&1
+}
+
+resolve_ref_commit() {
+    local ref="$1"
+    local commit=""
+
+    if commit="$(git -C "${WORKSPACE}" rev-parse --verify "${ref}^{commit}" 2>/dev/null)"; then
+        printf '%s\n' "${commit}"
+        return 0
+    fi
+
+    if try_fetch_ref origin "${ref}"; then
+        git -C "${WORKSPACE}" rev-parse --verify "FETCH_HEAD^{commit}"
+        return 0
+    fi
+
+    if git -C "${WORKSPACE}" remote get-url upstream >/dev/null 2>&1; then
+        echo "[smoke_migration] Ref ${ref} not found on origin, trying upstream" >&2
+        if try_fetch_ref upstream "${ref}"; then
+            git -C "${WORKSPACE}" rev-parse --verify "FETCH_HEAD^{commit}"
+            return 0
+        fi
+    fi
+
+    if [ -n "${FALLBACK_REMOTE_URL}" ]; then
+        echo "[smoke_migration] Ref ${ref} not found locally, trying ${FALLBACK_REMOTE_URL}" >&2
+        if try_fetch_ref "${FALLBACK_REMOTE_URL}" "${ref}"; then
+            git -C "${WORKSPACE}" rev-parse --verify "FETCH_HEAD^{commit}"
+            return 0
+        fi
+    fi
+
+    echo "[smoke_migration] ERROR: unable to resolve git ref ${ref}" >&2
+    return 1
 }
 
 build_image() {
