@@ -45,13 +45,13 @@ recorder:
 
 climate:
   - platform: duepi_evo
-    name: Poele Pellets
+    name: Old Poele Pellets
     host: 192.168.1.86 # put you own IP here
     port: 2000
     scan_interval: 60
     min_temp: 20
     max_temp: 30
     auto_reset: True
-    unique_id: poele_pellet
+    unique_id: old_poele_pellet
     temp_nofeedback: 16
     # init_command: False

@@ -42,7 +42,9 @@ def legacy_climate_entity_unique_ids(entry: Any) -> tuple[str, ...]:
     return tuple(dict.fromkeys(unique_ids))
 
 
-def _iter_existing_entity_ids(registry: Any, unique_ids: Iterable[str]) -> dict[str, str]:
+def _iter_existing_entity_ids(
+    registry: Any, unique_ids: Iterable[str]
+) -> dict[str, str]:
     """Resolve candidate unique IDs to current entity IDs."""
     existing: dict[str, str] = {}
     for unique_id in unique_ids:
@@ -52,7 +54,9 @@ def _iter_existing_entity_ids(registry: Any, unique_ids: Iterable[str]) -> dict[
     return existing
 
 
-def _iter_legacy_entry_scoped_unique_ids(registry: Any, configured_unique_id: str) -> tuple[str, ...]:
+def _iter_legacy_entry_scoped_unique_ids(
+    registry: Any, configured_unique_id: str
+) -> tuple[str, ...]:
     """Return old PR1 entry-scoped climate unique IDs still present in the registry."""
     entities = getattr(registry, "entities", {})
     values = entities.values() if hasattr(entities, "values") else ()
@@ -79,6 +83,10 @@ def _iter_legacy_entry_scoped_unique_ids(registry: Any, configured_unique_id: st
 
 def migrate_climate_entity_registry(registry: Any, entry: Any) -> bool:
     """Migrate known legacy climate unique IDs to the stable current format."""
+
+    if entry.version and entry.version >= 1:
+        return False
+
     target_unique_id = stable_climate_entity_unique_id(entry)
     configured_unique_id = entry.data.get(CONF_UNIQUE_ID, DEFAULT_UNIQUE_ID)
     candidates = (
@@ -110,7 +118,11 @@ def migrate_climate_entity_registry(registry: Any, entry: Any) -> bool:
 
     for unique_id in candidates:
         entity_id = existing.get(unique_id)
-        if not entity_id or entity_id == canonical_entity_id or entity_id in removed_entity_ids:
+        if (
+            not entity_id
+            or entity_id == canonical_entity_id
+            or entity_id in removed_entity_ids
+        ):
             continue
         registry.async_remove(entity_id)
         removed_entity_ids.add(entity_id)
