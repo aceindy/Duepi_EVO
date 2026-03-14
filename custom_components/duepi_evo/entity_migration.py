@@ -54,6 +54,17 @@ def _iter_existing_entity_ids(
     return existing
 
 
+def _get_registry_entry(registry: Any, entity_id: str) -> Any | None:
+    """Return a registry entry by entity_id when the registry exposes entities."""
+    entities = getattr(registry, "entities", None)
+    if entities is None:
+        return None
+    getter = getattr(entities, "get", None)
+    if getter is None:
+        return None
+    return getter(entity_id)
+
+
 def _iter_legacy_entry_scoped_unique_ids(
     registry: Any, configured_unique_id: str
 ) -> tuple[str, ...]:
@@ -83,10 +94,6 @@ def _iter_legacy_entry_scoped_unique_ids(
 
 def migrate_climate_entity_registry(registry: Any, entry: Any) -> bool:
     """Migrate known legacy climate unique IDs to the stable current format."""
-
-    if entry.version and entry.version >= 1:
-        return False
-
     target_unique_id = stable_climate_entity_unique_id(entry)
     configured_unique_id = entry.data.get(CONF_UNIQUE_ID, DEFAULT_UNIQUE_ID)
     candidates = (
@@ -98,6 +105,7 @@ def migrate_climate_entity_registry(registry: Any, entry: Any) -> bool:
     if not existing:
         return False
 
+    changed = False
     preferred_order = candidates
     canonical_unique_id = next(
         unique_id for unique_id in preferred_order if unique_id in existing
@@ -109,12 +117,24 @@ def migrate_climate_entity_registry(registry: Any, entry: Any) -> bool:
     if target_entity_id and target_entity_id != canonical_entity_id:
         registry.async_remove(target_entity_id)
         removed_entity_ids.add(target_entity_id)
+        changed = True
 
-    registry.async_update_entity(
-        canonical_entity_id,
-        new_unique_id=target_unique_id,
-        config_entry_id=entry.entry_id,
-    )
+    canonical_entry = _get_registry_entry(registry, canonical_entity_id)
+    canonical_config_entry_id = getattr(canonical_entry, "config_entry_id", None)
+
+    if canonical_unique_id != target_unique_id:
+        registry.async_update_entity(
+            canonical_entity_id,
+            new_unique_id=target_unique_id,
+            config_entry_id=entry.entry_id,
+        )
+        changed = True
+    elif canonical_config_entry_id != entry.entry_id:
+        registry.async_update_entity(
+            canonical_entity_id,
+            config_entry_id=entry.entry_id,
+        )
+        changed = True
 
     for unique_id in candidates:
         entity_id = existing.get(unique_id)
@@ -126,8 +146,9 @@ def migrate_climate_entity_registry(registry: Any, entry: Any) -> bool:
             continue
         registry.async_remove(entity_id)
         removed_entity_ids.add(entity_id)
+        changed = True
 
-    return True
+    return changed
 
 
 def stable_yaml_fallback_unique_id(host: str, port: int) -> str:

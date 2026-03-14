@@ -36,6 +36,8 @@ class FakeEntityRegistry:
         self.entities: dict[str, FakeRegistryEntry] = {
             entry.entity_id: entry for entry in entries
         }
+        self.update_calls: list[tuple[str, str | None, str | None]] = []
+        self.remove_calls: list[str] = []
 
     def async_get_entity_id(self, domain: str, platform: str, unique_id: str) -> str | None:
         """Return the current entity ID for a domain/platform/unique_id tuple."""
@@ -57,7 +59,17 @@ class FakeEntityRegistry:
     ) -> FakeRegistryEntry:
         """Update a fake entity-registry entry."""
         entry = self.entities[entity_id]
+        self.update_calls.append((entity_id, new_unique_id, config_entry_id))
         if new_unique_id is not None:
+            for other_entity_id, other_entry in self.entities.items():
+                if (
+                    other_entry.domain == entry.domain
+                    and other_entry.platform == entry.platform
+                    and other_entry.unique_id == new_unique_id
+                ):
+                    raise ValueError(
+                        f"Unique id '{new_unique_id}' is already in use by '{other_entity_id}'"
+                    )
             entry.unique_id = new_unique_id
         if config_entry_id is not None:
             entry.config_entry_id = config_entry_id
@@ -65,6 +77,7 @@ class FakeEntityRegistry:
 
     def async_remove(self, entity_id: str) -> None:
         """Remove a fake entity-registry entry."""
+        self.remove_calls.append(entity_id)
         self.entities.pop(entity_id, None)
 
 
@@ -145,6 +158,47 @@ def test_migration_handles_recreated_entries_from_old_pr1_format() -> None:
     assert list(registry.entities) == ["climate.poele_pellets"]
     assert registry.entities["climate.poele_pellets"].unique_id == "192.168.1.12:2000:climate"
     assert registry.entities["climate.poele_pellets"].config_entry_id == "entry-new"
+
+
+def test_migration_skips_configflow_only_entity_already_using_stable_unique_id() -> None:
+    """ConfigFlow-only entities already on the stable ID should be left untouched."""
+    entry = _entry(entry_id="entry-new")
+    registry = FakeEntityRegistry(
+        FakeRegistryEntry(
+            "climate.poele_pellets",
+            "192.168.1.12:2000:climate",
+            config_entry_id="entry-new",
+        )
+    )
+
+    assert migrate_climate_entity_registry(registry, entry) is False
+    assert list(registry.entities) == ["climate.poele_pellets"]
+    assert registry.update_calls == []
+    assert registry.remove_calls == []
+
+
+def test_migration_keeps_stable_entity_and_removes_remaining_legacy_duplicates() -> None:
+    """Stable entities should still absorb older duplicates when they coexist."""
+    entry = _entry(entry_id="entry-new")
+    registry = FakeEntityRegistry(
+        FakeRegistryEntry(
+            "climate.poele_pellets",
+            "192.168.1.12:2000:climate",
+            config_entry_id="entry-old",
+        ),
+        FakeRegistryEntry(
+            "climate.poele_pellets_entry",
+            "entry-old_duepi_unique",
+            config_entry_id="entry-old",
+        ),
+    )
+
+    assert migrate_climate_entity_registry(registry, entry) is True
+    assert list(registry.entities) == ["climate.poele_pellets"]
+    assert registry.entities["climate.poele_pellets"].unique_id == "192.168.1.12:2000:climate"
+    assert registry.entities["climate.poele_pellets"].config_entry_id == "entry-new"
+    assert registry.update_calls == [("climate.poele_pellets", None, "entry-new")]
+    assert registry.remove_calls == ["climate.poele_pellets_entry"]
 
 
 def test_translation_files_exist_and_parse() -> None:

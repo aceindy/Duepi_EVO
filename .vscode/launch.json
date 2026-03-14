@@ -8,6 +8,8 @@
             "module": "homeassistant",
             "args": [
                 "--debug",
+                "--log-level",
+                "DEBUG",
                 "-c",
                 "${workspaceFolder}/config"
             ],
