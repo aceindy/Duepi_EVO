@@ -63,6 +63,7 @@ from .const import (
     entry_unique_id,
 )
 from .coordinator import DuepiEvoCoordinator
+from .device import build_device_info
 from .entity_migration import stable_yaml_fallback_unique_id
 
 _LOGGER = logging.getLogger(__name__)
@@ -192,6 +193,10 @@ async def async_setup_platform(
 
     coordinator = _coordinator_from_yaml(hass, import_data)
     await coordinator.async_refresh()
+    unique_base = entry_unique_id(
+        import_data[CONF_HOST],
+        import_data[CONF_PORT],
+    )
     async_add_entities(
         [
             DuepiEvoClimateEntity(
@@ -201,6 +206,7 @@ async def async_setup_platform(
                     import_data[CONF_HOST],
                     import_data[CONF_PORT],
                 ),
+                unique_base=unique_base,
                 min_temp=float(import_data[CONF_MIN_TEMP]),
                 max_temp=float(import_data[CONF_MAX_TEMP]),
                 no_feedback=float(import_data[CONF_NOFEEDBACK]),
@@ -232,6 +238,7 @@ async def async_setup_entry(
                 coordinator=coordinator,
                 name=name,
                 unique_id=unique_id,
+                unique_base=config_entry_unique_id,
                 min_temp=min_temp,
                 max_temp=max_temp,
                 no_feedback=no_feedback,
@@ -252,16 +259,20 @@ class DuepiEvoClimateEntity(CoordinatorEntity[DuepiEvoCoordinator], ClimateEntit
         coordinator: DuepiEvoCoordinator,
         name: str,
         unique_id: str,
+        unique_base: str,
         min_temp: float,
         max_temp: float,
         no_feedback: float,
     ) -> None:
         super().__init__(coordinator)
         self._name = name
+        self._device_name = name
+        self._unique_base = unique_base
         self._attr_unique_id = unique_id
         self._min_temp = min_temp
         self._max_temp = max_temp
         self._no_feedback = no_feedback
+        self._legacy_attr_warning_logged = False
 
     @property
     def name(self) -> str:
@@ -292,6 +303,11 @@ class DuepiEvoClimateEntity(CoordinatorEntity[DuepiEvoCoordinator], ClimateEntit
     def max_temp(self) -> float:
         """Return max setpoint."""
         return self._max_temp
+
+    @property
+    def device_info(self):
+        """Return the parent stove device information."""
+        return build_device_info(self._unique_base, self._device_name)
 
     @property
     def _state(self) -> DuepiEvoState | None:
@@ -347,6 +363,13 @@ class DuepiEvoClimateEntity(CoordinatorEntity[DuepiEvoCoordinator], ClimateEntit
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Expose legacy attributes during transition period."""
+        if not self._legacy_attr_warning_logged:
+            _LOGGER.warning(
+                "Legacy Duepi EVO climate attributes are deprecated and will be removed "
+                "after two releases. Please use dedicated sensor entities instead."
+            )
+            self._legacy_attr_warning_logged = True
+
         state = self._state
         if state is None:
             return {

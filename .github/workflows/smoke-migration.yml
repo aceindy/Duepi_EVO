@@ -1,0 +1,32 @@
+name: Smoke Migration
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke-migration:
+    runs-on: ubuntu-latest
+    env:
+      DUEPI_ENABLE_MIGRATION_SMOKE: ${{ vars.DUEPI_ENABLE_MIGRATION_SMOKE }}
+      DUEPI_MIGRATION_BASE_REF: ${{ vars.DUEPI_MIGRATION_BASE_REF }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Duepi EVO smoke test
+        run: |
+          set -euo pipefail
+          args=()
+          if [ "${DUEPI_ENABLE_MIGRATION_SMOKE:-true}" = "false" ]; then
+            args+=(--skip-migration)
+          else
+            args+=(--from-ref "${DUEPI_MIGRATION_BASE_REF:-v2026.03.02}")
+          fi
+
+          bash ./scripts/smoke_migration.sh "${args[@]}"

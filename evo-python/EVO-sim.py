@@ -58,6 +58,10 @@ class StoveState:
         self.power_level = 0         # 0-5
         self.setpoint = 20           # °C
         self.error_code = 0
+        self.pcb_temp = 35           # °C
+        self.total_burn_time = 500   # hours, encoded on 6 hex digits
+        self.burn_time_since_reset = 42  # hours, encoded on 6 hex digits
+        self.pressure_switch = 0x0100    # 0x0100 => OK, 0x0300 => Pressure
         self._ignition_task = None
         self._sim_task = None
 
@@ -119,9 +123,25 @@ class StoveState:
             with self.lock:
                 return self.encode_response(self.error_code)
 
+        elif c == "DF000": # GET_PCBTEMP
+            with self.lock:
+                return self.encode_response(self.pcb_temp)
+
         elif c == "C6000": # GET_SETPOINT
             with self.lock:
                 return self.encode_response(self.setpoint)
+
+        elif c == "C0000": # GET_PRESSURE_SWITCH
+            with self.lock:
+                return self.encode_response(self.pressure_switch)
+
+        elif c == "ED000": # GET_TOTAL_BURN_TIME
+            with self.lock:
+                return self.encode_response(self.total_burn_time, width=6)
+
+        elif c == "EE000": # GET_BURN_TIME
+            with self.lock:
+                return self.encode_response(self.burn_time_since_reset, width=6)
 
         elif c == "D6000": # REMOTE_RESET
             with self.lock:
@@ -194,13 +214,20 @@ class StoveState:
                         self.ambient_temp -= 3
 
                     self.flugas_temp = min(250, self.flugas_temp + (2 if self.power_level > 2 else 1))
+                    self.pcb_temp = min(80, self.pcb_temp + 1)
                     self.exh_fan_speed = 800 + self.power_level * 200 + int(math.sin(tick) * 50)
                     self.pellet_speed = max(0, 20 + self.power_level * 8 + int(math.sin(tick * 0.7) * 5))
+                    self.pressure_switch = 0x0300
+                    if tick % 720 == 0:
+                        self.total_burn_time += 1
+                        self.burn_time_since_reset += 1
 
                 elif self.status == "cooling":
                     self.flugas_temp = max(40, self.flugas_temp - 5)
+                    self.pcb_temp = max(30, self.pcb_temp - 1)
                     self.exh_fan_speed = max(0, self.exh_fan_speed - 100)
                     self.pellet_speed = 0
+                    self.pressure_switch = 0x0300
                     if self.flugas_temp <= 50 and self.exh_fan_speed <= 100:
                         self.status = "off"
                         log.info("Stove cooled down → off")
@@ -208,6 +235,8 @@ class StoveState:
                 elif self.status == "starting":
                     # Simulate ignition sequence (takes ~30s)
                     self.flugas_temp = min(150, self.flugas_temp + 10)
+                    self.pcb_temp = min(60, self.pcb_temp + 1)
+                    self.pressure_switch = 0x0300
                     if self.flugas_temp >= 150:
                         self.status = "on"
                         log.info("Stove ignition complete → on")
@@ -215,8 +244,10 @@ class StoveState:
                 elif self.status == "off":
                     self.ambient_temp = max(150, self.ambient_temp - 2)  # cool toward 15°C
                     self.flugas_temp = max(30, self.flugas_temp - 3)
+                    self.pcb_temp = max(25, self.pcb_temp - 1)
                     self.exh_fan_speed = 0
                     self.pellet_speed = 0
+                    self.pressure_switch = 0x0100
 
     # ------------------------------------------------------------------
     # JSON snapshot for UI
@@ -234,6 +265,10 @@ class StoveState:
                 "setpoint": self.setpoint,
                 "error_code": self.error_code,
                 "error_label": self.ERROR_CODES.get(self.error_code, str(self.error_code)),
+                "pcb_temp": self.pcb_temp,
+                "total_burn_time": self.total_burn_time,
+                "burn_time_since_reset": self.burn_time_since_reset,
+                "pressure_switch": self.pressure_switch,
             }
 
     def apply_ui_command(self, action: str, value: str) -> str:

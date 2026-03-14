@@ -6,7 +6,7 @@ from homeassistant.components.climate import HVACMode
 from homeassistant.const import Platform
 
 DOMAIN = "duepi_evo"
-PLATFORMS: list[Platform] = [Platform.CLIMATE]
+PLATFORMS: list[Platform] = [Platform.CLIMATE, Platform.SENSOR, Platform.BINARY_SENSOR]
 
 DEFAULT_NAME = "Duepi EVO"
 DEFAULT_HOST = ""
@@ -35,6 +35,7 @@ STATE_COOL = 0x08000000
 STATE_ECO = 0x10000000
 
 GET_SETPOINT = "C6000"
+GET_PRESSURE_SWITCH = "C0000"
 GET_FLUGASTEMP = "D0000"
 GET_TEMPERATURE = "D1000"
 GET_POWERLEVEL = "D3000"
@@ -42,6 +43,9 @@ GET_PELLETSPEED = "D4000"
 REMOTE_RESET = "D6000"
 GET_STATUS = "D9000"
 GET_ERRORSTATE = "DA000"
+GET_PCBTEMP = "DF000"
+GET_TOTAL_BURN_TIME = "ED000"
+GET_BURN_TIME = "EE000"
 GET_EXHFANSPEED = "EF000"
 GET_INITCOMMAND = "DC000"
 
@@ -60,6 +64,13 @@ ATTR_EXH_FAN_SPEED = "exh_fan_speed"
 ATTR_FLU_GAS_TEMP = "flu_gas_temp"
 ATTR_PELLET_SPEED = "pellet_speed"
 ATTR_POWER_LEVEL = "power_level"
+ATTR_PCB_TEMP = "pcb_temp"
+ATTR_TOTAL_BURN_TIME = "total_burn_time"
+ATTR_BURN_TIME_SINCE_RESET = "burn_time_since_reset"
+ATTR_PRESSURE_SWITCH = "pressure_switch"
+
+PRESSURE_SWITCH_OK = 0x0100
+PRESSURE_SWITCH_PRESSURE = 0x0300
 
 
 def entry_unique_id(host: str, port: int) -> str:
