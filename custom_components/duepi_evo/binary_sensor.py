@@ -10,7 +10,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
+from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -23,6 +23,7 @@ from .const import (
     entry_unique_id,
 )
 from .coordinator import DuepiEvoCoordinator
+from .device import build_device_info
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -36,6 +37,7 @@ BINARY_SENSOR_DESCRIPTIONS: tuple[DuepiEvoBinarySensorDescription, ...] = (
     DuepiEvoBinarySensorDescription(
         key=ATTR_PRESSURE_SWITCH,
         name="Pressure Switch",
+        entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda state: state.pressure_switch_active,
     ),
 )
@@ -81,6 +83,8 @@ class DuepiEvoBinarySensorEntity(CoordinatorEntity[DuepiEvoCoordinator], BinaryS
     ) -> None:
         super().__init__(coordinator)
         self.entity_description = description
+        self._device_name = name
+        self._unique_base = unique_base
         self._attr_name = f"{name} {description.name}"
         self._attr_unique_id = f"{unique_base}:binary_sensor:{description.key}"
 
@@ -91,3 +95,8 @@ class DuepiEvoBinarySensorEntity(CoordinatorEntity[DuepiEvoCoordinator], BinaryS
         if state is None:
             return None
         return self.entity_description.value_fn(state)
+
+    @property
+    def device_info(self):
+        """Return the parent stove device information."""
+        return build_device_info(self._unique_base, self._device_name)

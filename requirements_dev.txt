@@ -1,6 +1,14 @@
 # Core Home Assistant (used for type hints and API compatibility)
 homeassistant==2026.2.2
 
+# Required by HA 2026.x core service validation (imports ai_task -> conversation)
+hassil
+home-assistant-intents
+mutagen
+ha-ffmpeg
+pymicro_vad
+pyspeex_noise
+
 # Home Assistant frontend (required by the frontend component)
 home-assistant-frontend
 
@@ -11,4 +19,5 @@ debugpy
 colorlog==6.10.1
 
 # JPEG acceleration (required by the camera component)
-pyturbojpeg
+# Use 1.x for libjpeg-turbo 2.x compatibility.
+pyturbojpeg<2.0

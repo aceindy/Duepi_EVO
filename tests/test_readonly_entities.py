@@ -7,9 +7,11 @@ from types import SimpleNamespace
 import pytest
 
 from homeassistant.components.climate import HVACMode
+from homeassistant.const import EntityCategory
 
 from custom_components.duepi_evo.binary_sensor import async_setup_entry as async_setup_binary_sensor_entry
 from custom_components.duepi_evo.client import DuepiEvoState
+from custom_components.duepi_evo.climate import async_setup_entry as async_setup_climate_entry
 from custom_components.duepi_evo.const import DOMAIN
 from custom_components.duepi_evo.sensor import async_setup_entry as async_setup_sensor_entry
 
@@ -44,6 +46,7 @@ def _entry() -> SimpleNamespace:
             "host": "192.168.1.12",
             "port": 2000,
         },
+        options={},
     )
 
 
@@ -91,6 +94,14 @@ async def test_sensor_setup_exposes_expected_read_only_entities() -> None:
         "192.168.1.12:2000:sensor:total_burn_time",
         "192.168.1.12:2000:sensor:burn_time_since_reset",
     }
+    assert all(
+        entity.entity_description.entity_category is EntityCategory.DIAGNOSTIC
+        for entity in entities
+    )
+    assert all(
+        entity.device_info["identifiers"] == {("duepi_evo", "192.168.1.12:2000")}
+        for entity in entities
+    )
 
 
 @pytest.mark.asyncio
@@ -105,8 +116,32 @@ async def test_binary_sensor_setup_maps_pressure_switch_state() -> None:
     assert len(entities) == 1
     entity = entities[0]
     assert entity.entity_description.key == "pressure_switch"
+    assert entity.entity_description.entity_category is EntityCategory.DIAGNOSTIC
     assert entity.is_on is True
     assert entity._attr_unique_id == "192.168.1.12:2000:binary_sensor:pressure_switch"
+    assert entity.device_info["identifiers"] == {("duepi_evo", "192.168.1.12:2000")}
 
     coordinator.data = _state(pressure_switch_active=None)
     assert entity.is_on is None
+
+
+@pytest.mark.asyncio
+async def test_climate_sensor_and_binary_sensor_share_same_device() -> None:
+    """All entities for one stove should attach to the same HA device."""
+    coordinator = SimpleNamespace(data=_state())
+    hass = SimpleNamespace(data={DOMAIN: {"entry-1": coordinator}})
+    climate_entities: list = []
+    sensor_entities: list = []
+    binary_sensor_entities: list = []
+    entry = _entry()
+
+    await async_setup_climate_entry(hass, entry, climate_entities.extend)
+    await async_setup_sensor_entry(hass, entry, sensor_entities.extend)
+    await async_setup_binary_sensor_entry(hass, entry, binary_sensor_entities.extend)
+
+    assert len(climate_entities) == 1
+    shared_identifiers = {("duepi_evo", "192.168.1.12:2000")}
+    assert climate_entities[0].device_info["identifiers"] == shared_identifiers
+    assert sensor_entities[0].device_info["identifiers"] == shared_identifiers
+    assert binary_sensor_entities[0].device_info["identifiers"] == shared_identifiers
+    assert climate_entities[0].device_info["name"] == "Pellet Stove"
