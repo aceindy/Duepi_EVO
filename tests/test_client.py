@@ -113,7 +113,18 @@ def test_set_temperature_skips_init_command_when_disabled(monkeypatch: pytest.Mo
     assert b"RF2170" in sent_frames[0]
 
 
-def test_fetch_state_parses_protocol_frames(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize(
+    ("setpoint_response", "expected_target_temp"),
+    [
+        ("\x1b00170000&", 23.0),
+        ("\x1b00100000&", 16.0),
+    ],
+)
+def test_fetch_state_parses_protocol_frames(
+    monkeypatch: pytest.MonkeyPatch,
+    setpoint_response: str,
+    expected_target_temp: float,
+) -> None:
     """Fetch should decode burner, fan, temperatures, speed and error code."""
     responses = [
         "\x1b02000000&",  # status => Flame On
@@ -123,7 +134,7 @@ def test_fetch_state_parses_protocol_frames(monkeypatch: pytest.MonkeyPatch) -> 
         "\x1b00C80000&",  # flugas => 200 C
         "\x1b00320000&",  # exh fan raw => 50 * 10 => 500 rpm
         "\x1b00050000&",  # error => 5 => Out of pellets
-        "\x1b00170000&",  # setpoint => 23
+        setpoint_response,
         "\x1b002D0000&",  # pcb temp => 45 C
         "\x1b0001F400&",  # total burn time => 500 h
         "\x1b00002A00&",  # burn time since reset => 42 h
@@ -146,7 +157,7 @@ def test_fetch_state_parses_protocol_frames(monkeypatch: pytest.MonkeyPatch) -> 
     assert state.flu_gas_temp_c == 200
     assert state.exh_fan_speed_rpm == 500
     assert state.error_code == "Out of pellets"
-    assert state.target_temp_c == 23.0
+    assert state.target_temp_c == expected_target_temp
     assert state.pcb_temp_c == 45
     assert state.total_burn_time_h == 500
     assert state.burn_time_since_reset_h == 42

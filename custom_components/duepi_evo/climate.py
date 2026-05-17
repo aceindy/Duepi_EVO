@@ -272,6 +272,7 @@ class DuepiEvoClimateEntity(CoordinatorEntity[DuepiEvoCoordinator], ClimateEntit
         self._min_temp = min_temp
         self._max_temp = max_temp
         self._no_feedback = no_feedback
+        self._last_target_temperature: float | None = None
         self._legacy_attr_warning_logged = False
 
     @property
@@ -328,6 +329,8 @@ class DuepiEvoClimateEntity(CoordinatorEntity[DuepiEvoCoordinator], ClimateEntit
         state = self._state
         if state and state.target_temp_c is not None:
             return state.target_temp_c
+        if self._last_target_temperature is not None:
+            return self._last_target_temperature
         return float(self._no_feedback)
 
     @property
@@ -427,10 +430,12 @@ class DuepiEvoClimateEntity(CoordinatorEntity[DuepiEvoCoordinator], ClimateEntit
             _LOGGER.debug("%s: Unable to use target temp", self._name)
             return
 
+        target_temperature = float(target_temperature)
+
         try:
             await self.hass.async_add_executor_job(
                 self.coordinator.client.set_temperature,
-                float(target_temperature),
+                target_temperature,
             )
         except DuepiEvoClientError as err:
             _LOGGER.error(
@@ -441,6 +446,7 @@ class DuepiEvoClimateEntity(CoordinatorEntity[DuepiEvoCoordinator], ClimateEntit
             )
             return
 
+        self._last_target_temperature = target_temperature
         await self.coordinator.async_request_refresh()
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
