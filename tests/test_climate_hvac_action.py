@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from types import SimpleNamespace
 
 import pytest
@@ -75,3 +76,33 @@ def test_hvac_action_mapping(
     entity = _entity_with_state(state)
 
     assert entity.hvac_action == expected_action
+
+
+def test_set_temperature_keeps_commanded_value_without_setpoint_feedback() -> None:
+    """No-feedback stoves should keep a successful command instead of reverting to fallback."""
+    captured: dict[str, float] = {}
+
+    def set_temperature(target_temperature: float) -> None:
+        captured["target_temperature"] = target_temperature
+
+    async def async_add_executor_job(func, *args):
+        return func(*args)
+
+    async def refresh_without_feedback() -> None:
+        coordinator.data = SimpleNamespace(target_temp_c=None)
+
+    coordinator = SimpleNamespace(
+        data=SimpleNamespace(target_temp_c=None),
+        client=SimpleNamespace(set_temperature=set_temperature),
+        async_request_refresh=refresh_without_feedback,
+    )
+    entity = DuepiEvoClimateEntity.__new__(DuepiEvoClimateEntity)
+    entity.coordinator = coordinator
+    entity.hass = SimpleNamespace(async_add_executor_job=async_add_executor_job)
+    entity._name = "Duepi EVO"
+    entity._no_feedback = 16.0
+
+    asyncio.run(entity.async_set_temperature(temperature=24))
+
+    assert captured["target_temperature"] == 24.0
+    assert entity.target_temperature == 24.0

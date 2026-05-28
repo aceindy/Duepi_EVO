@@ -285,7 +285,7 @@ class DuepiEvoClient:
                 setpoint_response = self._send_and_recv(sock, GET_SETPOINT)
                 setpoint_raw = self._read_hex_value(setpoint_response, 4)
                 target_temperature = None
-                if setpoint_raw != 0 and self.min_temp < setpoint_raw < self.max_temp:
+                if setpoint_raw != 0 and self.min_temp <= setpoint_raw <= self.max_temp:
                     target_temperature = float(setpoint_raw)
 
                 pcb_temp = self._optional_read(
