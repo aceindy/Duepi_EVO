@@ -14,7 +14,6 @@ from homeassistant.components.climate import (
     ClimateEntityFeature,
     HVACAction,
     HVACMode,
-    UnitOfTemperature,
 )
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.const import (
@@ -23,7 +22,7 @@ from homeassistant.const import (
     CONF_NAME,
     CONF_PORT,
     CONF_SCAN_INTERVAL,
-    REVOLUTIONS_PER_MINUTE,
+    UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
@@ -71,8 +70,8 @@ _LOGGER = logging.getLogger(__name__)
 SUPPORT_FLAGS = (
     ClimateEntityFeature.TARGET_TEMPERATURE
     | ClimateEntityFeature.FAN_MODE
-    | ClimateEntityFeature.TURN_OFF
-    | ClimateEntityFeature.TURN_ON
+    | getattr(ClimateEntityFeature, "TURN_OFF", 0)
+    | getattr(ClimateEntityFeature, "TURN_ON", 0)
 )
 
 PLATFORM_SCHEMA = CLIMATE_PLATFORM_SCHEMA.extend(
@@ -251,7 +250,11 @@ class DuepiEvoClimateEntity(CoordinatorEntity[DuepiEvoCoordinator], ClimateEntit
     """Duepi EVO climate entity backed by a DataUpdateCoordinator."""
 
     _attr_supported_features = SUPPORT_FLAGS
-    _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    _enable_turn_on_off_backwards_compatibility = False
+    _attr_native_temperature_unit = UnitOfTemperature.CELSIUS
+    if not hasattr(ClimateEntity, "native_temperature_unit"):
+        # Home Assistant before 2026.11 reads the original attribute.
+        _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_target_temperature_step = 1.0
 
     def __init__(
@@ -316,7 +319,7 @@ class DuepiEvoClimateEntity(CoordinatorEntity[DuepiEvoCoordinator], ClimateEntit
         return self.coordinator.data
 
     @property
-    def current_temperature(self) -> float | None:
+    def native_current_temperature(self) -> float | None:
         """Return current ambient temperature."""
         state = self._state
         if state is None:
@@ -324,7 +327,7 @@ class DuepiEvoClimateEntity(CoordinatorEntity[DuepiEvoCoordinator], ClimateEntit
         return state.current_temp_c
 
     @property
-    def target_temperature(self) -> float:
+    def native_target_temperature(self) -> float:
         """Return target temperature."""
         state = self._state
         if state and state.target_temp_c is not None:
@@ -332,6 +335,11 @@ class DuepiEvoClimateEntity(CoordinatorEntity[DuepiEvoCoordinator], ClimateEntit
         if self._last_target_temperature is not None:
             return self._last_target_temperature
         return float(self._no_feedback)
+
+    if not hasattr(ClimateEntity, "native_current_temperature"):
+        # Only expose legacy overrides on versions which require them.
+        current_temperature = native_current_temperature
+        target_temperature = native_target_temperature
 
     @property
     def hvac_mode(self) -> HVACMode:
@@ -388,7 +396,7 @@ class DuepiEvoClimateEntity(CoordinatorEntity[DuepiEvoCoordinator], ClimateEntit
             ATTR_BURNER_STATUS: state.burner_status,
             ATTR_ERROR_CODE: state.error_code,
             ATTR_EXH_FAN_SPEED: (
-                f"{state.exh_fan_speed_rpm} {REVOLUTIONS_PER_MINUTE}"
+                f"{state.exh_fan_speed_rpm} rpm"
                 if state.exh_fan_speed_rpm is not None
                 else None
             ),
