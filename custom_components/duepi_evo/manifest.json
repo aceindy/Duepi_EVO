@@ -1,7 +1,7 @@
 {
   "domain": "duepi_evo",
   "name": "Duepi Evo",
-  "version":"2026.11.0",
+  "version":"2026.11.09",
   "config_flow": true,
   "documentation": "https://github.com/aceindy/Duepi_EVO",
   "issue_tracker": "https://github.com/aceindy/Duepi_EVO/issues",
