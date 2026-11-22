@@ -412,7 +412,7 @@ class DuepiEvoClimateEntity(CoordinatorEntity[DuepiEvoCoordinator], ClimateEntit
     async def async_added_to_hass(self) -> None:
         """Set stable entity_id based on configured name."""
         await super().async_added_to_hass()
-        self.entity_id = f"climate.{slugify(self._name)}"
+        """self.entity_id = f"climate.{slugify(self._name)}" this currently causes issue with area naming"""
 
     async def async_set_fan_mode(self, fan_mode: str) -> None:
         """Set fan mode and refresh."""
